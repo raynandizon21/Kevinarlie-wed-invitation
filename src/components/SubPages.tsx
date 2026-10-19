@@ -144,61 +144,66 @@ export const DetailsPage: React.FC<DetailsPageProps> = ({
   );
 };
 
-// --- TIMELINE: printed wedding-program look inside a gold arch.
-// One screen, no scrolling: sizes follow the screen height (dvh) so it fits any phone.
+// --- TIMELINE: dark emerald + gold. One screen, no scrolling: sizes follow the screen height (dvh). ---
 export const TimelinePage: React.FC<{ onBack: () => void; timeline: TimelineItem[] }> = ({ onBack, timeline }) => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     transition={{ duration: 0.6, ease: 'easeInOut' }}
-    className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F2EBDD] text-[#102F27] px-[clamp(1rem,5vw,1.5rem)] pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1.25rem,env(safe-area-inset-bottom,0px))]"
+    className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#102F27] text-[#F2EBDD] px-[clamp(1.5rem,7vw,2rem)] pt-[max(1.25rem,env(safe-area-inset-top,0px))] pb-[max(1.75rem,env(safe-area-inset-bottom,0px))]"
   >
+    {/* Emerald glow + thin gold frame */}
+    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_-10%,rgba(24,88,68,0.95)_0%,rgba(16,47,39,0)_65%)]" />
+    <div className="pointer-events-none absolute inset-2.5 rounded-[1.25rem] border border-[#B08A4F]/40" />
+
     <button
       type="button"
       onClick={onBack}
-      className="flex shrink-0 items-center self-start text-xs uppercase tracking-widest hover:text-[#B08A4F] transition-colors cursor-pointer"
+      className="relative z-10 flex shrink-0 items-center self-start text-xs uppercase tracking-widest text-[#F2EBDD]/80 hover:text-[#E6D3AE] transition-colors cursor-pointer"
     >
       <ChevronLeft className="w-4 h-4 mr-1" /> Back
     </button>
 
-    {/* Gold arch (outer line + faint inner line) framing the whole program */}
-    <div className="relative mx-auto mt-[1.5dvh] flex w-full max-w-[22rem] min-h-0 flex-1 flex-col rounded-t-[999px] border border-[#B08A4F]/55 px-[clamp(1rem,5vw,1.75rem)] pb-[2.5dvh] pt-[clamp(2.25rem,9dvh,6rem)]">
-      <div className="pointer-events-none absolute inset-[6px] rounded-t-[999px] border border-[#B08A4F]/20" />
-
-      <div className="relative shrink-0 text-center">
-        <p className="font-['Parisienne'] text-[clamp(1.5rem,4dvh,2.2rem)] leading-none text-[#B08A4F]">the day</p>
-        <h2 className="mt-[0.8dvh] font-['Oswald'] text-[clamp(1rem,2.6dvh,1.35rem)] font-light uppercase tracking-[0.42em] pl-[0.42em]">
-          Order of Events
-        </h2>
+    <div className="relative shrink-0 text-center mt-[2dvh]">
+      <p className="font-['Parisienne'] text-[clamp(1.4rem,3.8dvh,2.1rem)] leading-none text-[#E6D3AE]">the day</p>
+      <h2 className="mt-[0.8dvh] font-['Oswald'] text-[clamp(1.25rem,min(3.8dvh,7vw),2rem)] font-light uppercase leading-tight whitespace-nowrap tracking-[0.24em] pl-[0.24em]">
+        Event Timeline
+      </h2>
+      <div className="mt-[1.4dvh] flex items-center justify-center gap-3">
+        <span className="h-px w-12 bg-gradient-to-r from-transparent to-[#B08A4F]" />
+        <span className="h-1.5 w-1.5 rotate-45 bg-[#B08A4F]" />
+        <span className="h-px w-12 bg-gradient-to-l from-transparent to-[#B08A4F]" />
       </div>
-
-      <ol className="relative mt-[2.2dvh] flex min-h-0 flex-1 flex-col items-center justify-evenly text-center">
-        {timeline.map((e, i) => (
-          <React.Fragment key={e.time}>
-            {i > 0 && (
-              <li aria-hidden className="flex items-center gap-2 py-[0.4dvh]">
-                <span className="h-px w-6 bg-[#B08A4F]/40" />
-                <span className="h-1 w-1 rotate-45 bg-[#B08A4F]/80" />
-                <span className="h-px w-6 bg-[#B08A4F]/40" />
-              </li>
-            )}
-            <motion.li
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 + i * 0.1, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <p className="font-['Parisienne'] text-[clamp(1.05rem,3dvh,1.75rem)] leading-none text-[#B08A4F]">
-                {e.time.toLowerCase()}
-              </p>
-              <p className="mt-[0.6dvh] font-['Oswald'] text-[clamp(0.72rem,1.85dvh,0.98rem)] font-light uppercase tracking-[0.26em] pl-[0.26em]">
-                {e.title}
-              </p>
-              <p className="mt-[0.3dvh] font-serif italic text-[clamp(0.72rem,1.75dvh,0.95rem)] text-stone-500">{e.location}</p>
-            </motion.li>
-          </React.Fragment>
-        ))}
-      </ol>
     </div>
+
+    {/* Time | gold line with diamond markers | title + venue. Rows spread over the remaining height. */}
+    <ol className="relative mx-auto mt-[3.5dvh] flex w-full max-w-sm min-h-0 flex-1 flex-col">
+      {timeline.map((e, i) => {
+        const last = i === timeline.length - 1;
+        return (
+        <motion.li
+          key={e.time}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.2 + i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className={`relative grid min-h-0 grid-cols-[4.4rem_2rem_1fr] items-start ${last ? 'flex-none' : 'flex-1'}`}
+        >
+          {/* Line segment from this marker down to the next one */}
+          {!last && <span className="absolute left-[5.4rem] top-[0.9rem] bottom-0 w-px -translate-x-1/2 bg-[#B08A4F]/45" />}
+          <p className="pt-[0.1em] text-right font-['Oswald'] text-[clamp(0.72rem,1.8dvh,0.9rem)] font-light uppercase tracking-[0.16em] text-[#B08A4F]">
+            {e.time}
+          </p>
+          <span className="relative z-10 mx-auto mt-[0.3rem] h-2.5 w-2.5 rotate-45 border border-[#E6D3AE] bg-[#B08A4F] shadow-[0_0_10px_rgba(176,138,79,0.6)]" />
+          <div className="min-w-0">
+            <p className="font-['Oswald'] text-[clamp(0.85rem,2.25dvh,1.1rem)] font-light uppercase leading-tight tracking-[0.12em]">
+              {e.title}
+            </p>
+            <p className="mt-[0.4dvh] font-serif italic text-[clamp(0.75rem,1.8dvh,0.95rem)] leading-snug text-[#F2EBDD]/60">{e.location}</p>
+          </div>
+        </motion.li>
+        );
+      })}
+    </ol>
   </motion.div>
 );
 
