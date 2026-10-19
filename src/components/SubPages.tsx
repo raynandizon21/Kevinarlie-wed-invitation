@@ -144,51 +144,66 @@ export const DetailsPage: React.FC<DetailsPageProps> = ({
   );
 };
 
-// --- TIMELINE (same look as the desktop site: ivory, gold center line, alternating sides) ---
+// --- TIMELINE: one screen, no scrolling. Sizes follow the screen height (dvh) so it fits any phone. ---
 export const TimelinePage: React.FC<{ onBack: () => void; timeline: TimelineItem[] }> = ({ onBack, timeline }) => (
-  <PageShell onBack={onBack}>
-    <div className="text-center mb-10">
-      <p className="font-script text-2xl text-[#B08A4F]">the day</p>
-      <h2 className="mt-1 font-['Oswald'] text-[clamp(1.6rem,8vw,2.25rem)] font-light uppercase tracking-[0.3em] text-[#102F27]">
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ duration: 0.5, ease: 'easeInOut' }}
+    className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F2EBDD] text-[#102F27] px-[clamp(1rem,5vw,1.5rem)] pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))]"
+  >
+    <button
+      type="button"
+      onClick={onBack}
+      className="flex shrink-0 items-center self-start text-xs uppercase tracking-widest hover:text-[#B08A4F] transition-colors cursor-pointer"
+    >
+      <ChevronLeft className="w-4 h-4 mr-1" /> Back
+    </button>
+
+    <div className="shrink-0 text-center mt-[1.5dvh]">
+      <p className="font-script text-[clamp(1.1rem,3dvh,1.6rem)] leading-none text-[#B08A4F]">the day</p>
+      <h2 className="mt-[0.6dvh] font-['Oswald'] text-[clamp(1.4rem,4.2dvh,2.2rem)] font-light uppercase leading-tight tracking-[0.28em] pl-[0.28em]">
         Event Timeline
       </h2>
-      <div className="flex items-center justify-center gap-3 mt-4">
-        <span className="h-px w-12 bg-[#B08A4F]/50" />
-        <span className="w-1.5 h-1.5 rotate-45 bg-[#B08A4F]" />
-        <span className="h-px w-12 bg-[#B08A4F]/50" />
+      <div className="mt-[1.2dvh] flex items-center justify-center gap-3">
+        <span className="h-px w-10 bg-[#B08A4F]/50" />
+        <span className="h-1.5 w-1.5 rotate-45 bg-[#B08A4F]" />
+        <span className="h-px w-10 bg-[#B08A4F]/50" />
       </div>
     </div>
 
-    <div className="relative">
-      <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-[#B08A4F]/50" />
-      <div className="space-y-10">
-        {timeline.map((e, i) => {
-          const left = i % 2 === 0;
-          return (
-            <motion.div
-              key={e.time}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="relative grid grid-cols-2 gap-9"
-            >
-              <span className="absolute left-1/2 top-0 flex h-6 w-6 -translate-x-1/2 items-center justify-center rounded-full border border-[#B08A4F]/60 bg-[#F2EBDD]">
+    {/* Events spread over the remaining height: first sits at the top, last at the bottom */}
+    <ol className="mx-auto mt-[2.5dvh] mb-[1.5dvh] flex w-full max-w-sm min-h-0 flex-1 flex-col">
+      {timeline.map((e, i) => {
+        const last = i === timeline.length - 1;
+        return (
+          <motion.li
+            key={e.time}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 + i * 0.08, ease: [0.16, 1, 0.3, 1] }}
+            className={`grid min-h-0 grid-cols-[4.75rem_1.5rem_1fr] gap-x-3 ${last ? 'flex-none' : 'flex-1'}`}
+          >
+            <p className="pt-[0.15em] text-right font-['Oswald'] text-[clamp(0.7rem,1.8dvh,0.85rem)] font-light uppercase tracking-[0.18em] text-[#B08A4F]">
+              {e.time}
+            </p>
+            <div className="relative flex justify-center">
+              {!last && <span className="absolute top-3 bottom-0 w-px bg-[#B08A4F]/45" />}
+              <span className="relative mt-[0.1em] flex h-[1.1rem] w-[1.1rem] items-center justify-center rounded-full border border-[#B08A4F]/60 bg-[#F2EBDD]">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#B08A4F]" />
               </span>
-              <div className={left ? 'text-right' : 'col-start-2'}>
-                <p className="font-['Oswald'] text-[11px] font-light uppercase tracking-[0.3em] text-[#B08A4F]">{e.time}</p>
-                <p className="mt-1 font-['Oswald'] text-[clamp(0.95rem,4.4vw,1.2rem)] font-light uppercase leading-snug tracking-[0.12em] text-[#102F27]">
-                  {e.title}
-                </p>
-                <p className="mt-1 text-[11px] text-stone-500">{e.location}</p>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
-    </div>
-  </PageShell>
+            </div>
+            <div className="min-w-0">
+              <p className="font-['Oswald'] text-[clamp(0.85rem,2.3dvh,1.15rem)] font-light uppercase leading-tight tracking-[0.1em]">
+                {e.title}
+              </p>
+              <p className="mt-[0.4dvh] text-[clamp(0.65rem,1.6dvh,0.8rem)] leading-snug text-stone-500">{e.location}</p>
+            </div>
+          </motion.li>
+        );
+      })}
+    </ol>
+  </motion.div>
 );
 
 // --- ENTOURAGE ---
