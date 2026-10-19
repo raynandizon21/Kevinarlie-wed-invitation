@@ -261,7 +261,15 @@ export default function App() {
             mapsReceptionUrl={weddingData.mapsReceptionUrl}
           />
         )}
-        {activeView === 'timeline' && <TimelinePage onBack={handleReturnToHub} timeline={TIMELINE} />}
+        {activeView === 'timeline' && <TimelinePage
+            onBack={handleReturnToHub}
+            timeline={TIMELINE}
+            coupleLine={`${weddingData.groomNickname || weddingData.groom.split(' ')[0]} & ${
+              weddingData.brideNickname || weddingData.bride.split(' ')[0]
+            } , ${new Date(weddingData.weddingDate)
+              .toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+              .replace(/\//g, '.')}`}
+          />}
         {activeView === 'entourage' && <EntouragePage onBack={handleReturnToHub} categories={ENTOURAGE_DATA} />}
         {activeView === 'rsvp' && (
           <RsvpPage onBack={handleReturnToHub} rsvpDeadline={weddingData.rsvpDeadline} />

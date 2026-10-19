@@ -7,7 +7,8 @@ import { getRsvpSourceForSubmit } from '../rsvpSource';
 import { FAQS_DATA } from '../data/weddingData';
 import jardinVenueImg from '../assets/images/jardin_venue_1791676573787.jpg';
 import tablescapeImg from '../assets/images/wedding_tablescape_candlelight_1791602927298.jpg';
-import entourageTitleImg from '../assets/images/the_entourage_title.png';
+import entourageTitleImg from '../assets/images/the_entourage_title.svg';
+import weddingTimelineTitleImg from '../assets/images/wedding_timeline_emerald.svg';
 
 // Page layout copied from the wedding-invitation templates (sticky Back + centered column),
 // widened on desktop so it fits both mobile and large screens.
@@ -144,66 +145,175 @@ export const DetailsPage: React.FC<DetailsPageProps> = ({
   );
 };
 
-// --- TIMELINE: dark emerald + gold. One screen, no scrolling: sizes follow the screen height (dvh). ---
-export const TimelinePage: React.FC<{ onBack: () => void; timeline: TimelineItem[] }> = ({ onBack, timeline }) => (
+// --- TIMELINE: printed "wedding timeline" card (script title with flourish lines, center rail,
+// alternating line icons). One screen, no scrolling: sizes follow the screen height (dvh).
+// Hand-drawn style line icons (48x48, stroke = currentColor) matching the printed timeline reference
+type LineIconProps = { className?: string };
+const LineIcon: React.FC<LineIconProps & { children: React.ReactNode }> = ({ className, children }) => (
+  <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+    {children}
+  </svg>
+);
+const burst = (cx: number, cy: number, r: number, n: number, inner = r * 0.35) =>
+  Array.from({ length: n }, (_, k) => {
+    const t = (k / n) * Math.PI * 2;
+    return <path key={k} d={`M${cx + Math.cos(t) * inner} ${cy + Math.sin(t) * inner} L${cx + Math.cos(t) * r} ${cy + Math.sin(t) * r}`} />;
+  });
+
+const RingsIcon: React.FC<LineIconProps> = ({ className }) => (
+  <LineIcon className={className}>
+    <circle cx="18" cy="30" r="10" /><circle cx="18" cy="30" r="7.5" />
+    <circle cx="30" cy="30" r="10" /><circle cx="30" cy="30" r="7.5" />
+    <path d="M26 13 L28 10 H34 L36 13 L31 18 Z M26 13 H36 M29 10 L31 18 M33 10 L31 18" />
+  </LineIcon>
+);
+const CameraIcon: React.FC<LineIconProps> = ({ className }) => (
+  <LineIcon className={className}>
+    <rect x="6" y="15" width="36" height="24" rx="3" />
+    <path d="M17 15 L20 10 H28 L31 15" />
+    <circle cx="24" cy="27" r="7.5" /><circle cx="24" cy="27" r="4.5" />
+    <path d="M10 15 V12 H14 V15 M35 19 H38" />
+  </LineIcon>
+);
+const DinnerIcon: React.FC<LineIconProps> = ({ className }) => (
+  <LineIcon className={className}>
+    <circle cx="24" cy="24" r="11" /><circle cx="24" cy="24" r="8" />
+    <path d="M6 10 V17 M8.5 10 V17 M11 10 V17 M6 17 Q8.5 21 11 17 M8.5 19 V38" />
+    <path d="M41 38 V24 M41 10 Q37 14 37 22 Q37 24 41 24 Z" />
+  </LineIcon>
+);
+const CakeIcon: React.FC<LineIconProps> = ({ className }) => (
+  <LineIcon className={className}>
+    <path d="M24 6 V12 M24 6 Q22.5 4 24 2.5 Q25.5 4 24 6" />
+    <rect x="16" y="12" width="16" height="8" rx="1" />
+    <rect x="11" y="20" width="26" height="9" rx="1" />
+    <rect x="7" y="29" width="34" height="10" rx="1" />
+    <path d="M16 15.5 Q18 17.5 20 15.5 T24 15.5 T28 15.5 T32 15.5 M11 23.5 Q13.5 26 16 23.5 T21 23.5 T26 23.5 T31 23.5 T37 23.5 M7 33 Q10 35.5 13 33 T19 33 T25 33 T31 33 T37 33 T41 33 M4 42 H44" />
+  </LineIcon>
+);
+const NoteIcon: React.FC<LineIconProps> = ({ className }) => (
+  <LineIcon className={className}>
+    <ellipse cx="17" cy="36" rx="5" ry="3.8" transform="rotate(-20 17 36)" />
+    <path d="M21.5 34.5 V8 Q24 14 31 16 Q37 18 34 26" />
+    <path d="M21.5 15 Q25 20 31 22" />
+  </LineIcon>
+);
+const BuffetIcon: React.FC<LineIconProps> = ({ className }) => (
+  <LineIcon className={className}>
+    <path d="M9 33 A15 15 0 0 1 39 33 Z" />
+    <circle cx="24" cy="15.5" r="2" />
+    <path d="M5 33 H43 M8 37 H40 M15 26 A9 9 0 0 1 20 21" />
+  </LineIcon>
+);
+const FireworksIcon: React.FC<LineIconProps> = ({ className }) => (
+  <LineIcon className={className}>
+    {burst(22, 15, 11, 14)}
+    {burst(37, 25, 7, 10)}
+    {burst(12, 31, 6, 9)}
+    <path d="M22 26 Q21 34 23 44 M37 32 Q36 38 37 44 M12 37 Q12 41 13 44" />
+  </LineIcon>
+);
+const CarriageIcon: React.FC<LineIconProps> = ({ className }) => (
+  <LineIcon className={className}>
+    <rect x="11" y="7" width="26" height="31" rx="4" />
+    <rect x="14.5" y="11" width="19" height="12" rx="1.5" />
+    <circle cx="17" cy="31" r="2" /><circle cx="31" cy="31" r="2" />
+    <path d="M21 31 H27 M11 14 H8 V20 M37 14 H40 V20 M14 38 V42 H18 V38 M30 38 V42 H34 V38" />
+  </LineIcon>
+);
+
+const TIMELINE_ICONS: Record<TimelineItem['icon'], React.FC<LineIconProps>> = {
+  rings: RingsIcon,
+  camera: CameraIcon,
+  dinner: DinnerIcon,
+  cake: CakeIcon,
+  dance: NoteIcon,
+  buffet: BuffetIcon,
+  fireworks: FireworksIcon,
+  carriage: CarriageIcon,
+  church: RingsIcon,
+  cocktail: DinnerIcon,
+  party: NoteIcon,
+};
+
+export const TimelinePage: React.FC<{ onBack: () => void; timeline: TimelineItem[]; coupleLine?: string }> = ({
+  onBack,
+  timeline,
+  coupleLine,
+}) => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     transition={{ duration: 0.6, ease: 'easeInOut' }}
-    className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#102F27] text-[#F2EBDD] px-[clamp(1.5rem,7vw,2rem)] pt-[max(1.25rem,env(safe-area-inset-top,0px))] pb-[max(1.75rem,env(safe-area-inset-bottom,0px))]"
+    className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F2EBDD] text-[#2A2A27] pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]"
   >
-    {/* Emerald glow + thin gold frame */}
-    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_-10%,rgba(24,88,68,0.95)_0%,rgba(16,47,39,0)_65%)]" />
-    <div className="pointer-events-none absolute inset-2.5 rounded-[1.25rem] border border-[#B08A4F]/40" />
-
     <button
       type="button"
       onClick={onBack}
-      className="relative z-10 flex shrink-0 items-center self-start text-xs uppercase tracking-widest text-[#F2EBDD]/80 hover:text-[#E6D3AE] transition-colors cursor-pointer"
+      className="ml-[clamp(1rem,5vw,1.5rem)] flex shrink-0 items-center self-start text-xs uppercase tracking-widest hover:text-[#B08A4F] transition-colors cursor-pointer"
     >
       <ChevronLeft className="w-4 h-4 mr-1" /> Back
     </button>
 
-    <div className="relative shrink-0 text-center mt-[2dvh]">
-      <p className="font-['Parisienne'] text-[clamp(1.4rem,3.8dvh,2.1rem)] leading-none text-[#E6D3AE]">the day</p>
-      <h2 className="mt-[0.8dvh] font-['Oswald'] text-[clamp(1.25rem,min(3.8dvh,7vw),2rem)] font-light uppercase leading-tight whitespace-nowrap tracking-[0.24em] pl-[0.24em]">
-        Event Timeline
-      </h2>
-      <div className="mt-[1.4dvh] flex items-center justify-center gap-3">
-        <span className="h-px w-12 bg-gradient-to-r from-transparent to-[#B08A4F]" />
-        <span className="h-1.5 w-1.5 rotate-45 bg-[#B08A4F]" />
-        <span className="h-px w-12 bg-gradient-to-l from-transparent to-[#B08A4F]" />
-      </div>
-    </div>
+    {/* Hand-lettered title (wedding_timeline.png, recolored emerald); its flourish lines run to the screen edges */}
+    <img
+      src={weddingTimelineTitleImg}
+      alt="Wedding timeline"
+      draggable={false}
+      className="mx-auto mt-[0.5dvh] block h-auto w-full max-w-[28rem] max-h-[24dvh] shrink-0 object-contain select-none"
+    />
+    {coupleLine && (
+      <p className="shrink-0 mt-[1.4dvh] text-center text-[clamp(0.7rem,1.7dvh,0.85rem)] uppercase tracking-[0.3em] pl-[0.3em]">
+        {coupleLine}
+      </p>
+    )}
 
-    {/* Time | gold line with diamond markers | title + venue. Rows spread over the remaining height. */}
-    <ol className="relative mx-auto mt-[3.5dvh] flex w-full max-w-sm min-h-0 flex-1 flex-col">
+    {/* Center rail; events are staggered: each takes two half-rows, so a left event sits between two right ones */}
+    <div className="mt-[2dvh] flex min-h-0 flex-1 justify-center">
+    <ol
+      className="relative grid h-full w-full max-w-sm px-[clamp(1rem,5vw,1.5rem)]"
+      style={{ gridTemplateRows: `repeat(${timeline.length + 1}, minmax(0, 1fr))`, maxHeight: `${(timeline.length + 1) * 5}rem` }}
+    >
+      <span className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-[#2A2A27]/55" />
       {timeline.map((e, i) => {
-        const last = i === timeline.length - 1;
-        return (
-        <motion.li
-          key={e.time}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 + i * 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className={`relative grid min-h-0 grid-cols-[4.4rem_2rem_1fr] items-start ${last ? 'flex-none' : 'flex-1'}`}
-        >
-          {/* Line segment from this marker down to the next one */}
-          {!last && <span className="absolute left-[5.4rem] top-[0.9rem] bottom-0 w-px -translate-x-1/2 bg-[#B08A4F]/45" />}
-          <p className="pt-[0.1em] text-right font-['Oswald'] text-[clamp(0.72rem,1.8dvh,0.9rem)] font-light uppercase tracking-[0.16em] text-[#B08A4F]">
-            {e.time}
-          </p>
-          <span className="relative z-10 mx-auto mt-[0.3rem] h-2.5 w-2.5 rotate-45 border border-[#E6D3AE] bg-[#B08A4F] shadow-[0_0_10px_rgba(176,138,79,0.6)]" />
-          <div className="min-w-0">
-            <p className="font-['Oswald'] text-[clamp(0.85rem,2.25dvh,1.1rem)] font-light uppercase leading-tight tracking-[0.12em]">
+        const Icon = TIMELINE_ICONS[e.icon] ?? RingsIcon;
+        const left = i % 2 === 1;
+        const text = (
+          <div className={left ? 'text-right' : 'text-left'}>
+            <p className="text-[clamp(0.72rem,2dvh,0.95rem)] font-semibold tracking-[0.12em]">{e.time}</p>
+            <p className="mt-[0.3dvh] text-[clamp(0.62rem,1.7dvh,0.8rem)] uppercase leading-snug tracking-[0.16em] text-[#2A2A27]/75">
               {e.title}
             </p>
-            <p className="mt-[0.4dvh] font-serif italic text-[clamp(0.75rem,1.8dvh,0.95rem)] leading-snug text-[#F2EBDD]/60">{e.location}</p>
           </div>
-        </motion.li>
+        );
+        const icon = <Icon className="h-[clamp(2.4rem,6.6dvh,3.5rem)] w-[clamp(2.4rem,6.6dvh,3.5rem)] shrink-0" />;
+        return (
+          <motion.li
+            key={e.time}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15 + i * 0.08, ease: [0.16, 1, 0.3, 1] }}
+            className="grid grid-cols-2 items-center"
+            style={{ gridRow: `${i + 1} / span 2`, gridColumn: 1 }}
+          >
+            {left ? (
+              <div className="col-start-1 flex items-center justify-end gap-2.5">
+                {text}
+                {icon}
+                <span className="h-px w-3 shrink-0 bg-[#2A2A27]/55" />
+              </div>
+            ) : (
+              <div className="col-start-2 flex items-center gap-2.5">
+                <span className="h-px w-3 shrink-0 bg-[#2A2A27]/55" />
+                {icon}
+                {text}
+              </div>
+            )}
+          </motion.li>
         );
       })}
     </ol>
+    </div>
   </motion.div>
 );
 

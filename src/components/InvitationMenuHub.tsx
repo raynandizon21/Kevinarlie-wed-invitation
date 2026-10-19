@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ColorPalette } from '../types/wedding';
 import jardinVenueImg from '../assets/images/jardin_venue_1791676573787.jpg';
 import meadowCoupleImg from '../assets/images/wedding_couple_meadow_1791602914531.jpg';
-import entourageTitleIvoryImg from '../assets/images/the_entourage_title_ivory.png';
+import entourageTitleIvoryImg from '../assets/images/the_entourage_title_ivory.svg';
 
 export type MenuModalView = 'rsvp' | 'details' | 'timeline' | 'faqs' | 'palette' | 'venues' | 'entourage';
 

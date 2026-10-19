@@ -6,7 +6,7 @@ import { DRESS_CODE, RsvpForm } from './SubPages';
 import jardinVenueImg from '../assets/images/jardin_venue_1791676573787.jpg';
 import meadowCoupleImg from '../assets/images/wedding_couple_meadow_1791602914531.jpg';
 import tablescapeImg from '../assets/images/wedding_tablescape_candlelight_1791602927298.jpg';
-import entourageTitleImg from '../assets/images/the_entourage_title.png';
+import entourageTitleImg from '../assets/images/the_entourage_title.svg';
 
 
 // Desktop (lg+) website version of the invitation: one long, sectioned page.
@@ -352,7 +352,7 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
                     <div className={left ? 'text-right' : 'col-start-2'}>
                       <p className="font-['Oswald'] text-base font-light uppercase tracking-[0.35em] text-[#B08A4F]">{e.time}</p>
                       <p className="mt-1 font-['Oswald'] text-2xl font-light uppercase tracking-[0.2em] text-[#102F27]">{e.title}</p>
-                      <p className="mt-2 text-sm text-stone-500">{e.location}</p>
+                      {e.location && <p className="mt-2 text-sm text-stone-500">{e.location}</p>}
                     </div>
                   </motion.div>
                 );
