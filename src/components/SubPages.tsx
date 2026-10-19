@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import confetti from 'canvas-confetti';
-import { ChevronLeft, ChevronDown, Navigation, Plus, X } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Navigation, Plus, X, Church, Wine, Utensils, Music, Gem, MapPin } from 'lucide-react';
 import { EntourageCategory, TimelineItem } from '../types/wedding';
 import { getRsvpSourceForSubmit } from '../rsvpSource';
 import { FAQS_DATA } from '../data/weddingData';
@@ -145,59 +145,74 @@ export const DetailsPage: React.FC<DetailsPageProps> = ({
 };
 
 // --- TIMELINE: one screen, no scrolling. Sizes follow the screen height (dvh) so it fits any phone. ---
+const TIMELINE_ICONS: Record<TimelineItem['icon'], React.ElementType> = {
+  rings: Gem,
+  church: Church,
+  cocktail: Wine,
+  dinner: Utensils,
+  party: Music,
+};
+
 export const TimelinePage: React.FC<{ onBack: () => void; timeline: TimelineItem[] }> = ({ onBack, timeline }) => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     transition={{ duration: 0.5, ease: 'easeInOut' }}
-    className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F2EBDD] text-[#102F27] px-[clamp(1rem,5vw,1.5rem)] pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))]"
+    className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F2EBDD] text-[#102F27] px-[clamp(1.6rem,7.5vw,2.1rem)] pt-[max(1.4rem,env(safe-area-inset-top,0px))] pb-[max(1.9rem,env(safe-area-inset-bottom,0px))]"
   >
+    {/* Stationery frame: double gold border */}
+    <div className="pointer-events-none absolute inset-2 rounded-[1.4rem] border border-[#B08A4F]/45" />
+    <div className="pointer-events-none absolute inset-[0.85rem] rounded-[1.1rem] border border-[#B08A4F]/20" />
+    {/* Soft emerald glow behind the heading */}
+    <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-[#78947F]/20 blur-3xl" />
+
     <button
       type="button"
       onClick={onBack}
-      className="flex shrink-0 items-center self-start text-xs uppercase tracking-widest hover:text-[#B08A4F] transition-colors cursor-pointer"
+      className="relative z-10 flex shrink-0 items-center self-start text-xs uppercase tracking-widest hover:text-[#B08A4F] transition-colors cursor-pointer"
     >
       <ChevronLeft className="w-4 h-4 mr-1" /> Back
     </button>
 
-    <div className="shrink-0 text-center mt-[1.5dvh]">
-      <p className="font-script text-[clamp(1.1rem,3dvh,1.6rem)] leading-none text-[#B08A4F]">the day</p>
-      <h2 className="mt-[0.6dvh] font-['Oswald'] text-[clamp(1.4rem,4.2dvh,2.2rem)] font-light uppercase leading-tight tracking-[0.28em] pl-[0.28em]">
+    <div className="relative shrink-0 text-center mt-[0.8dvh]">
+      <p className="font-['Parisienne'] text-[clamp(1.3rem,3.4dvh,1.9rem)] leading-none text-[#B08A4F]">the day</p>
+      <h2 className="mt-[0.5dvh] font-['Oswald'] text-[clamp(1.35rem,4dvh,2.1rem)] font-light uppercase leading-tight tracking-[0.28em] pl-[0.28em]">
         Event Timeline
       </h2>
-      <div className="mt-[1.2dvh] flex items-center justify-center gap-3">
+      <div className="mt-[1dvh] flex items-center justify-center gap-3">
         <span className="h-px w-10 bg-[#B08A4F]/50" />
         <span className="h-1.5 w-1.5 rotate-45 bg-[#B08A4F]" />
         <span className="h-px w-10 bg-[#B08A4F]/50" />
       </div>
     </div>
 
-    {/* Events spread over the remaining height: first sits at the top, last at the bottom */}
-    <ol className="mx-auto mt-[2.5dvh] mb-[1.5dvh] flex w-full max-w-sm min-h-0 flex-1 flex-col">
+    {/* Events spread over the remaining height; the gold line runs through the medallions */}
+    <ol className="relative mx-auto mt-[2dvh] flex w-full max-w-sm min-h-0 flex-1 flex-col justify-between">
+      <span className="absolute left-[1.15rem] top-[1.2rem] bottom-[1.2rem] w-px -translate-x-1/2 bg-gradient-to-b from-[#B08A4F]/20 via-[#B08A4F]/60 to-[#B08A4F]/20" />
       {timeline.map((e, i) => {
-        const last = i === timeline.length - 1;
+        const Icon = TIMELINE_ICONS[e.icon] ?? Gem;
         return (
           <motion.li
             key={e.time}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 + i * 0.08, ease: [0.16, 1, 0.3, 1] }}
-            className={`grid min-h-0 grid-cols-[4.75rem_1.5rem_1fr] gap-x-3 ${last ? 'flex-none' : 'flex-1'}`}
+            initial={{ opacity: 0, x: 14 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.15 + i * 0.09, ease: [0.16, 1, 0.3, 1] }}
+            className="relative flex items-center gap-3"
           >
-            <p className="pt-[0.15em] text-right font-['Oswald'] text-[clamp(0.7rem,1.8dvh,0.85rem)] font-light uppercase tracking-[0.18em] text-[#B08A4F]">
-              {e.time}
-            </p>
-            <div className="relative flex justify-center">
-              {!last && <span className="absolute top-3 bottom-0 w-px bg-[#B08A4F]/45" />}
-              <span className="relative mt-[0.1em] flex h-[1.1rem] w-[1.1rem] items-center justify-center rounded-full border border-[#B08A4F]/60 bg-[#F2EBDD]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#B08A4F]" />
-              </span>
-            </div>
-            <div className="min-w-0">
-              <p className="font-['Oswald'] text-[clamp(0.85rem,2.3dvh,1.15rem)] font-light uppercase leading-tight tracking-[0.1em]">
+            <span className="relative z-10 flex h-[2.3rem] w-[2.3rem] shrink-0 items-center justify-center rounded-full bg-[#185844] text-[#F2EBDD] ring-4 ring-[#F2EBDD] shadow-[0_6px_14px_rgba(16,47,39,0.25)]">
+              <Icon className="h-4 w-4" strokeWidth={1.6} />
+            </span>
+            <div className="min-w-0 flex-1 rounded-2xl border border-[#B08A4F]/25 bg-white/75 px-[0.9rem] py-[clamp(0.45rem,1.3dvh,0.8rem)] shadow-[0_8px_22px_rgba(16,47,39,0.07)]">
+              <p className="font-['Oswald'] text-[clamp(0.65rem,1.6dvh,0.78rem)] font-light uppercase tracking-[0.25em] text-[#B08A4F]">
+                {e.time}
+              </p>
+              <p className="mt-[0.2dvh] font-['Oswald'] text-[clamp(0.85rem,2.25dvh,1.1rem)] font-light uppercase leading-tight tracking-[0.1em]">
                 {e.title}
               </p>
-              <p className="mt-[0.4dvh] text-[clamp(0.65rem,1.6dvh,0.8rem)] leading-snug text-stone-500">{e.location}</p>
+              <p className="mt-[0.3dvh] flex items-center gap-1 text-[clamp(0.62rem,1.5dvh,0.76rem)] leading-snug text-stone-500">
+                <MapPin className="h-3 w-3 shrink-0 text-[#78947F]" />
+                <span className="truncate">{e.location}</span>
+              </p>
             </div>
           </motion.li>
         );
