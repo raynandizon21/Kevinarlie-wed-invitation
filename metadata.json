@@ -1,0 +1,6 @@
+{
+  "name": "Kevin & Arlei Wedding Invitation",
+  "description": "Interactive wedding invitation web app featuring a realistic 3D envelope opening animation, 4-color aesthetic Earthy Tones palette, RSVP, event timeline, and guestbook.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

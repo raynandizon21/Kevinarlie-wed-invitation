@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-serif: 'Cormorant Garamond', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-script: 'Alex Brush', cursive;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #F2EBDD;
+    color: #102F27;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, .font-serif {
+    font-family: var(--font-serif);
+  }
+
+  .font-script {
+    font-family: var(--font-script);
+  }
+}
+
+/* Custom 3D envelope perspective and realistic styling */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.perspective-1500 {
+  perspective: 1500px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+/* Authentic Deckled Torn Paper Edges */
+.deckled-card {
+  box-shadow: 
+    0 1px 2px rgba(0,0,0,0.07), 
+    0 4px 12px rgba(0,0,0,0.08),
+    0 16px 32px rgba(0,0,0,0.12);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.06));
+}
+
+/* Subtle deckled edge effect and paper grain */
+.paper-texture {
+  background-color: #F2EBDD;
+  background-image: 
+    radial-gradient(#d3cbbd 0.75px, transparent 0.75px),
+    radial-gradient(#e0d7c7 0.75px, #F2EBDD 0.75px);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+}
+
+.linen-texture {
+  background-color: #F5EFE6;
+  background-image: 
+    radial-gradient(#cfc5b4 0.6px, transparent 0.6px),
+    linear-gradient(rgba(0, 0, 0, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.015) 1px, transparent 1px);
+  background-size: 16px 16px, 8px 8px, 8px 8px;
+}
+
+/* Envelope realistic paper shadows */
+.envelope-shadow {
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 15px 30px -5px rgba(19, 62, 26, 0.25),
+    0 25px 50px -12px rgba(0, 0, 0, 0.28);
+}
+
+/* Fine vintage gold botanical liner pattern for inner envelope */
+.envelope-liner {
+  background-color: #FAF6EE;
+  background-image: radial-gradient(#B08A4F 0.8px, transparent 0.8px), radial-gradient(#A2B6A2 0.8px, #FAF6EE 0.8px);
+  background-size: 18px 18px;
+  background-position: 0 0, 9px 9px;
+}
+
+/* Golden foil stamp shine */
+.gold-foil {
+  background: linear-gradient(135deg, #B08A4F 0%, #B08A4F 25%, #F4E3B2 50%, #B08A4F 75%, #B08A4F 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-foil-bg {
+  background: linear-gradient(135deg, #B08A4F 0%, #B08A4F 35%, #F5E5BB 50%, #B08A4F 70%, #B08A4F 100%);
+}
+
+/* Realistic Wax Seal 3D Effect */
+.wax-seal-realistic {
+  background: radial-gradient(circle at 35% 35%, #B08A4F 0%, #B08A4F 40%, #9B7023 75%, #6B4C14 100%);
+  box-shadow: 
+    inset 0 2px 3px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.5),
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    0 8px 18px rgba(0, 0, 0, 0.25);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F4EFE6;
+}
+::-webkit-scrollbar-thumb {
+  background: #A2B6A2;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #78947F;
+}
