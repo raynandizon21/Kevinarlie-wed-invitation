@@ -34,6 +34,29 @@ const MAX_GUEST_NAME_LEN = 120;
 // One person per guest name (keep in sync with MULTI_NAME in SubPages.tsx)
 const MULTI_NAME = /[\/&+]|\band\b|,(?!\s*(?:jr|sr|ii|iii|iv)\.?\s*$)/i;
 
+type GuestFields = { brings_guest: string | null; guest_names: string | null } | { error: string };
+
+// Validate the plus-one answer: anyone attending may bring 1..MAX_GUEST_NAMES guests, each with a full name
+function readGuests(bringsGuest: unknown, guestNames: unknown): GuestFields {
+  if (bringsGuest !== 'yes' && bringsGuest !== 'no') {
+    return { error: 'Please choose Yes or No for bringing guests.' };
+  }
+  if (bringsGuest === 'no') return { brings_guest: 'no', guest_names: null };
+  const raw = Array.isArray(guestNames) ? guestNames : [];
+  const cleaned = raw
+    .map((s: unknown) => String(s).trim())
+    .filter(Boolean)
+    .slice(0, MAX_GUEST_NAMES)
+    .map((s) => s.slice(0, MAX_GUEST_NAME_LEN));
+  if (cleaned.length === 0) {
+    return { error: "Please enter your guests' full names." };
+  }
+  if (cleaned.some((n) => MULTI_NAME.test(n))) {
+    return { error: 'Please enter one person per guest name.' };
+  }
+  return { brings_guest: 'yes', guest_names: JSON.stringify(cleaned) };
+}
+
 // Endpoint to add a new RSVP
 app.post('/api/rsvps', async (req, res) => {
   const { name, contact, isAttending, source, bringsGuest, guestNames } = req.body ?? {};
@@ -47,27 +70,10 @@ app.post('/api/rsvps', async (req, res) => {
   let brings_guest: string | null = null;
   let guest_names: string | null = null;
 
-  // Anyone attending may bring guests (1..MAX_GUEST_NAMES, each with a full name)
   if (isAttending === 'yes' && (bringsGuest !== undefined || sourceValue === 'qr')) {
-    if (bringsGuest !== 'yes' && bringsGuest !== 'no') {
-      return res.status(400).json({ error: 'Please choose Yes or No for bringing guests.' });
-    }
-    brings_guest = bringsGuest;
-    if (bringsGuest === 'yes') {
-      const raw = Array.isArray(guestNames) ? guestNames : [];
-      const cleaned = raw
-        .map((s: unknown) => String(s).trim())
-        .filter(Boolean)
-        .slice(0, MAX_GUEST_NAMES)
-        .map((s) => s.slice(0, MAX_GUEST_NAME_LEN));
-      if (cleaned.length === 0) {
-        return res.status(400).json({ error: "Please enter your guests' full names." });
-      }
-      if (cleaned.some((n) => MULTI_NAME.test(n))) {
-        return res.status(400).json({ error: 'Please enter one person per guest name.' });
-      }
-      guest_names = JSON.stringify(cleaned);
-    }
+    const guests = readGuests(bringsGuest, guestNames);
+    if ('error' in guests) return res.status(400).json({ error: guests.error });
+    ({ brings_guest, guest_names } = guests);
   }
 
   try {
@@ -83,6 +89,44 @@ app.post('/api/rsvps', async (req, res) => {
   } catch (error) {
     console.error('Failed to insert RSVP:', error);
     res.status(500).json({ error: 'Failed to save data to the database.' });
+  }
+});
+
+// Admin edit of an active RSVP; pushes the updated row to every open admin
+app.patch('/api/rsvps/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'Invalid RSVP id.' });
+  }
+  const { name, contact, isAttending, bringsGuest, guestNames } = req.body ?? {};
+  const cleanName = String(name ?? '').trim();
+  if (!cleanName || (isAttending !== 'yes' && isAttending !== 'no')) {
+    return res.status(400).json({ error: 'Name and attendance are required.' });
+  }
+
+  let brings_guest: string | null = null;
+  let guest_names: string | null = null;
+  if (isAttending === 'yes') {
+    const guests = readGuests(bringsGuest, guestNames);
+    if ('error' in guests) return res.status(400).json({ error: guests.error });
+    ({ brings_guest, guest_names } = guests);
+  }
+
+  try {
+    const [result] = await pool.query(
+      'UPDATE rsvps SET name = ?, contact = ?, isAttending = ?, brings_guest = ?, guest_names = ? WHERE id = ? AND active = 1',
+      [cleanName, String(contact ?? '').trim() || null, isAttending, brings_guest, guest_names, id]
+    );
+    if ((result as { affectedRows: number }).affectedRows === 0) {
+      return res.status(404).json({ error: 'RSVP not found.' });
+    }
+    const [rows] = await pool.query('SELECT * FROM rsvps WHERE id = ?', [id]);
+    const updated = (rows as unknown[])[0];
+    io.emit('rsvp:updated', updated);
+    res.json(updated);
+  } catch (error) {
+    console.error('Failed to update RSVP:', error);
+    res.status(500).json({ error: 'Failed to update the RSVP.' });
   }
 });
 

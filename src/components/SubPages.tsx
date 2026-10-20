@@ -236,6 +236,12 @@ const TIMELINE_ICONS: Record<TimelineItem['icon'], React.FC<LineIconProps>> = {
   party: NoteIcon,
 };
 
+/** Line icon for a timeline event (shared with the desktop timeline). */
+export const TimelineIcon: React.FC<LineIconProps & { icon: TimelineItem['icon'] }> = ({ icon, className }) => {
+  const Icon = TIMELINE_ICONS[icon] ?? RingsIcon;
+  return <Icon className={className} />;
+};
+
 export const TimelinePage: React.FC<{ onBack: () => void; timeline: TimelineItem[]; coupleLine?: string }> = ({
   onBack,
   timeline,
@@ -245,7 +251,7 @@ export const TimelinePage: React.FC<{ onBack: () => void; timeline: TimelineItem
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     transition={{ duration: 0.6, ease: 'easeInOut' }}
-    className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F2EBDD] text-[#2A2A27] pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]"
+    className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F2EBDD] text-[#102F27] pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]"
   >
     <button
       type="button"
@@ -274,19 +280,19 @@ export const TimelinePage: React.FC<{ onBack: () => void; timeline: TimelineItem
       className="relative grid h-full w-full max-w-sm px-[clamp(1rem,5vw,1.5rem)]"
       style={{ gridTemplateRows: `repeat(${timeline.length + 1}, minmax(0, 1fr))`, maxHeight: `${(timeline.length + 1) * 5}rem` }}
     >
-      <span className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-[#2A2A27]/55" />
+      <span className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-[#78947F]/70" />
       {timeline.map((e, i) => {
         const Icon = TIMELINE_ICONS[e.icon] ?? RingsIcon;
         const left = i % 2 === 1;
         const text = (
           <div className={left ? 'text-right' : 'text-left'}>
-            <p className="text-[clamp(0.72rem,2dvh,0.95rem)] font-semibold tracking-[0.12em]">{e.time}</p>
-            <p className="mt-[0.3dvh] text-[clamp(0.62rem,1.7dvh,0.8rem)] uppercase leading-snug tracking-[0.16em] text-[#2A2A27]/75">
+            <p className="text-[clamp(0.72rem,2dvh,0.95rem)] font-semibold tracking-[0.12em] text-[#185844]">{e.time}</p>
+            <p className="mt-[0.3dvh] text-[clamp(0.62rem,1.7dvh,0.8rem)] uppercase leading-snug tracking-[0.16em] text-[#102F27]/70">
               {e.title}
             </p>
           </div>
         );
-        const icon = <Icon className="h-[clamp(2.4rem,6.6dvh,3.5rem)] w-[clamp(2.4rem,6.6dvh,3.5rem)] shrink-0" />;
+        const icon = <Icon className="h-[clamp(2.4rem,6.6dvh,3.5rem)] w-[clamp(2.4rem,6.6dvh,3.5rem)] shrink-0 text-[#78947F]" />;
         return (
           <motion.li
             key={e.time}
@@ -300,11 +306,11 @@ export const TimelinePage: React.FC<{ onBack: () => void; timeline: TimelineItem
               <div className="col-start-1 flex items-center justify-end gap-2.5">
                 {text}
                 {icon}
-                <span className="h-px w-3 shrink-0 bg-[#2A2A27]/55" />
+                <span className="h-px w-3 shrink-0 bg-[#78947F]/70" />
               </div>
             ) : (
               <div className="col-start-2 flex items-center gap-2.5">
-                <span className="h-px w-3 shrink-0 bg-[#2A2A27]/55" />
+                <span className="h-px w-3 shrink-0 bg-[#78947F]/70" />
                 {icon}
                 {text}
               </div>

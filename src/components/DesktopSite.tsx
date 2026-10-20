@@ -2,11 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { Navigation } from 'lucide-react';
 import { EntourageCategory, TimelineItem } from '../types/wedding';
-import { DRESS_CODE, RsvpForm } from './SubPages';
+import { DRESS_CODE, RsvpForm, TimelineIcon } from './SubPages';
 import jardinVenueImg from '../assets/images/jardin_venue_1791676573787.jpg';
 import meadowCoupleImg from '../assets/images/wedding_couple_meadow_1791602914531.jpg';
 import tablescapeImg from '../assets/images/wedding_tablescape_candlelight_1791602927298.jpg';
 import entourageTitleImg from '../assets/images/the_entourage_title.svg';
+import weddingTimelineTitleImg from '../assets/images/wedding_timeline_emerald.svg';
 
 
 // Desktop (lg+) website version of the invitation: one long, sectioned page.
@@ -86,6 +87,8 @@ interface DesktopSiteProps {
   mapsReceptionUrl: string;
   rsvpDeadline: string;
   timeline: TimelineItem[];
+  /** "Kevin & Arlei , 12.14.2025" line under the timeline title (same as mobile) */
+  timelineCoupleLine: string;
   entourage: EntourageCategory[];
 }
 
@@ -103,6 +106,7 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
   mapsReceptionUrl,
   rsvpDeadline,
   timeline,
+  timelineCoupleLine,
   entourage,
 }) => {
   // Jump to the section named in the URL (e.g. #rsvp): instantly on first load, smoothly afterwards
@@ -336,29 +340,58 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
 
       {/* ================= TIMELINE ================= */}
       <section id="section-timeline" className="scroll-mt-20 bg-[#F2EBDD] pb-28 pt-20">
-        <div className="mx-auto max-w-5xl px-10">
-          <SectionHeading eyebrow="the day" title="Event Timeline" />
+        <div className="mx-auto max-w-5xl px-10 text-[#102F27]">
+          {/* Same design as the mobile Timeline page: hand-lettered title, couple line, center rail with line icons */}
+          <motion.div {...reveal} className="text-center">
+            <img
+              src={weddingTimelineTitleImg}
+              alt="Wedding timeline"
+              draggable={false}
+              className="mx-auto block h-auto w-full max-w-[34rem] select-none"
+            />
+            <p className="mt-4 text-sm uppercase tracking-[0.3em] pl-[0.3em]">{timelineCoupleLine}</p>
+          </motion.div>
 
-          <div className="relative">
-            <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-[#B08A4F]/50" />
-            <div className="space-y-14">
-              {timeline.map((e, i) => {
-                const left = i % 2 === 0;
-                return (
-                  <motion.div key={e.time} {...reveal} className="relative grid grid-cols-2 gap-20">
-                    <span className="absolute left-1/2 top-1 flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border border-[#B08A4F]/60 bg-[#F2EBDD]">
-                      <span className="h-2 w-2 rounded-full bg-[#B08A4F]" />
-                    </span>
-                    <div className={left ? 'text-right' : 'col-start-2'}>
-                      <p className="font-['Oswald'] text-base font-light uppercase tracking-[0.35em] text-[#B08A4F]">{e.time}</p>
-                      <p className="mt-1 font-['Oswald'] text-2xl font-light uppercase tracking-[0.2em] text-[#102F27]">{e.title}</p>
-                      {e.location && <p className="mt-2 text-sm text-stone-500">{e.location}</p>}
+          {/* Events are staggered: each takes two half-rows, so a left event sits between two right ones */}
+          <ol
+            className="relative mx-auto mt-14 grid max-w-2xl"
+            style={{ gridTemplateRows: `repeat(${timeline.length + 1}, 3.75rem)` }}
+          >
+            <span className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-[#78947F]/70" />
+            {timeline.map((e, i) => {
+              const left = i % 2 === 1;
+              const text = (
+                <div className={left ? 'text-right' : 'text-left'}>
+                  <p className="text-lg font-semibold tracking-[0.12em] text-[#185844]">{e.time}</p>
+                  <p className="mt-0.5 text-sm uppercase leading-snug tracking-[0.16em] text-[#102F27]/70">{e.title}</p>
+                </div>
+              );
+              const icon = <TimelineIcon icon={e.icon} className="h-16 w-16 shrink-0 text-[#78947F]" />;
+              return (
+                <motion.li
+                  key={e.time}
+                  {...reveal}
+                  transition={{ ...reveal.transition, delay: i * 0.08 }}
+                  className="grid grid-cols-2 items-center"
+                  style={{ gridRow: `${i + 1} / span 2`, gridColumn: 1 }}
+                >
+                  {left ? (
+                    <div className="col-start-1 flex items-center justify-end gap-4">
+                      {text}
+                      {icon}
+                      <span className="h-px w-5 shrink-0 bg-[#78947F]/70" />
                     </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
+                  ) : (
+                    <div className="col-start-2 flex items-center gap-4">
+                      <span className="h-px w-5 shrink-0 bg-[#78947F]/70" />
+                      {icon}
+                      {text}
+                    </div>
+                  )}
+                </motion.li>
+              );
+            })}
+          </ol>
         </div>
       </section>
 

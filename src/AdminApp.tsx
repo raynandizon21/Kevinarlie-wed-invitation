@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Archive, RotateCcw, Trash2, X } from 'lucide-react';
+import { Archive, MoreVertical, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 // RSVP admin panel (ported from the wedding-invitation project, Kevin & Arlei colors)
@@ -17,7 +17,20 @@ interface RsvpRow {
 }
 
 /** Guests per page. */
-const PAGE_SIZE = 25;
+const PAGE_SIZES = [10, 25, 50, 100];
+/** Plus-ones one RSVP may bring (same limit as the RSVP form and the server). */
+const MAX_GUESTS = 10;
+const inputClass =
+  'mt-1.5 w-full rounded-xl border border-stone-200 bg-white px-3.5 py-2.5 text-sm text-[#102F27] outline-none focus:border-[#185844] focus:ring-2 focus:ring-[#185844]/15';
+
+/** Values in the Edit pop-up. */
+interface EditDraft {
+  row: RsvpRow;
+  name: string;
+  contact: string;
+  isAttending: 'yes' | 'no';
+  guests: string[];
+}
 
 // 'plus' = attending RSVPs that bring at least one guest
 type StatusFilter = 'all' | 'yes' | 'no' | 'plus';
@@ -69,6 +82,86 @@ const StatusBadge: React.FC<{ attending: boolean; small?: boolean }> = ({ attend
   </span>
 );
 
+// Three-dot row menu (Edit / Delete). Fixed position so the table's overflow never clips it.
+const RowMenu: React.FC<{ name: string; onEdit: () => void; onDelete: () => void }> = ({ name, onEdit, onDelete }) => {
+  const [pos, setPos] = useState<React.CSSProperties | null>(null);
+
+  useEffect(() => {
+    if (!pos) return;
+    const close = () => setPos(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close();
+    };
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', close);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [pos]);
+
+  const toggle = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (pos) return setPos(null);
+    const r = e.currentTarget.getBoundingClientRect();
+    const right = window.innerWidth - r.right;
+    // Open upward when the row is near the bottom of the screen
+    setPos(r.bottom + 110 > window.innerHeight ? { bottom: window.innerHeight - r.top + 4, right } : { top: r.bottom + 4, right });
+  };
+
+  const item = 'flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs font-medium transition-colors cursor-pointer';
+  return (
+    <>
+      <button
+        type="button"
+        onClick={toggle}
+        title="Actions"
+        aria-label={`Actions for ${name}`}
+        aria-haspopup="menu"
+        aria-expanded={!!pos}
+        className={`rounded-full p-1.5 transition-colors cursor-pointer ${pos ? 'bg-[#F2EBDD] text-[#102F27]' : 'text-stone-400 hover:bg-[#F2EBDD] hover:text-[#102F27]'}`}
+      >
+        <MoreVertical className="h-4 w-4" />
+      </button>
+      {pos && (
+        <>
+          <div className="fixed inset-0 z-[80]" onClick={() => setPos(null)} />
+          <div
+            role="menu"
+            style={pos}
+            className="fixed z-[81] w-36 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 shadow-[0_8px_30px_rgba(16,47,39,0.15)]"
+          >
+            <button
+              type="button"
+              role="menuitem"
+              autoFocus
+              onClick={() => {
+                setPos(null);
+                onEdit();
+              }}
+              className={`${item} text-[#102F27] hover:bg-[#F2EBDD]`}
+            >
+              <Pencil className="h-3.5 w-3.5" /> Edit
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setPos(null);
+                onDelete();
+              }}
+              className={`${item} text-[#9B2C2C] hover:bg-red-50`}
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Delete
+            </button>
+          </div>
+        </>
+      )}
+    </>
+  );
+};
+
 export default function AdminApp() {
   const [rsvps, setRsvps] = useState<RsvpRow[]>([]);
   const [error, setError] = useState('');
@@ -83,13 +176,20 @@ export default function AdminApp() {
   const [restoringId, setRestoringId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
+  // Edit pop-up
+  const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState('');
 
-  const attendingCount = rsvps.filter((g) => g.isAttending === 'yes').length;
+  const attendingRsvpCount = rsvps.filter((g) => g.isAttending === 'yes').length;
   const declinedCount = rsvps.filter((g) => g.isAttending === 'no').length;
   /** Total plus-one guests named by attending RSVPs. */
   const plusOneCount = rsvps
     .filter((g) => g.isAttending === 'yes' && g.brings_guest === 'yes')
     .reduce((sum, g) => sum + parseGuestNames(g.guest_names).length, 0);
+  /** Headcount: everyone attending, plus-ones included. */
+  const attendingCount = attendingRsvpCount + plusOneCount;
 
   // Soft delete (sets active = 0 on the server; the row stays in the database)
   const confirmDelete = async () => {
@@ -110,20 +210,67 @@ export default function AdminApp() {
     }
   };
 
-  // Esc closes the remove pop-up first, then the archive panel
+  const openEdit = (g: RsvpRow) => {
+    setEditError('');
+    setEditDraft({
+      row: g,
+      name: g.name,
+      contact: g.contact ?? '',
+      isAttending: g.isAttending,
+      guests: parseGuestNames(g.guest_names),
+    });
+  };
+
+  const updateGuest = (i: number, value: string) =>
+    setEditDraft((d) => (d ? { ...d, guests: d.guests.map((n, j) => (j === i ? value : n)) } : d));
+
+  const saveEdit = async () => {
+    const d = editDraft;
+    if (!d) return;
+    if (!d.name.trim()) return setEditError('Please enter a name.');
+    const guests = d.isAttending === 'yes' ? d.guests.map((n) => n.trim()).filter(Boolean) : [];
+    try {
+      setSaving(true);
+      setEditError('');
+      const response = await fetch(`/api/rsvps/${d.row.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: d.name,
+          contact: d.contact,
+          isAttending: d.isAttending,
+          bringsGuest: guests.length ? 'yes' : 'no',
+          guestNames: guests,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error((data as { error?: string }).error || 'Could not save the changes.');
+      const row = data as RsvpRow;
+      setRsvps((prev) => prev.map((r) => (r.id === row.id ? row : r)));
+      setEditDraft(null);
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : 'Could not save the changes.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Esc closes the open pop-up first, then the archive panel
   useEffect(() => {
-    if (!pendingDelete && !archiveOpen) return;
+    if (!pendingDelete && !archiveOpen && !editDraft) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       if (pendingDelete) {
         if (!deleting) setPendingDelete(null);
+      } else if (editDraft) {
+        if (!saving) setEditDraft(null);
       } else {
         setArchiveOpen(false);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [pendingDelete, deleting, archiveOpen]);
+  }, [pendingDelete, deleting, archiveOpen, editDraft, saving]);
 
   const fetchArchived = async () => {
     try {
@@ -183,6 +330,9 @@ export default function AdminApp() {
     socket.on('rsvp:new', (row: RsvpRow) => {
       setRsvps((prev) => (prev.some((g) => g.id === row.id) ? prev : [row, ...prev]));
     });
+    socket.on('rsvp:updated', (row: RsvpRow) => {
+      setRsvps((prev) => prev.map((g) => (g.id === row.id ? row : g)));
+    });
     socket.on('rsvp:deleted', ({ id }: { id: number }) => {
       setRsvps((prev) => prev.filter((g) => g.id !== id));
       fetchArchived();
@@ -203,7 +353,7 @@ export default function AdminApp() {
 
   useEffect(() => {
     setPage(1);
-  }, [statusFilter]);
+  }, [statusFilter, pageSize]);
 
   const filteredRsvps = rsvps.filter((g) => {
     if (statusFilter === 'plus') {
@@ -221,16 +371,16 @@ export default function AdminApp() {
     : [];
   const listLength = isPlusView ? plusOneRows.length : filteredRsvps.length;
 
-  const totalPages = Math.max(1, Math.ceil(listLength / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(listLength / pageSize));
   useEffect(() => {
     setPage((p) => Math.min(p, totalPages));
   }, [totalPages]);
 
-  const pageStart = (page - 1) * PAGE_SIZE;
-  const displayedRsvps = isPlusView ? [] : filteredRsvps.slice(pageStart, pageStart + PAGE_SIZE);
-  const displayedPlusOnes = plusOneRows.slice(pageStart, pageStart + PAGE_SIZE);
+  const pageStart = (page - 1) * pageSize;
+  const displayedRsvps = isPlusView ? [] : filteredRsvps.slice(pageStart, pageStart + pageSize);
+  const displayedPlusOnes = plusOneRows.slice(pageStart, pageStart + pageSize);
   const rangeStart = listLength === 0 ? 0 : pageStart + 1;
-  const rangeEnd = Math.min(pageStart + PAGE_SIZE, listLength);
+  const rangeEnd = Math.min(pageStart + pageSize, listLength);
   const formatDate = (ts: string) =>
     ts ? new Date(ts).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' }) : '';
 
@@ -239,7 +389,8 @@ export default function AdminApp() {
     value: number,
     active: boolean,
     onClick?: () => void,
-    tone: 'green' | 'red' | 'gold' | 'plain' = 'plain'
+    tone: 'green' | 'red' | 'gold' | 'plain' = 'plain',
+    hint?: string
   ) => {
     // Selected card is filled with its color; otherwise white. Only one background class at a time.
     const selected = {
@@ -262,7 +413,9 @@ export default function AdminApp() {
         className={`rounded-2xl border px-4 py-3 text-left transition-colors ${onClick ? 'cursor-pointer' : ''} ${look}`}
       >
         <p className={`text-[10px] uppercase tracking-[0.25em] ${active ? 'opacity-80' : 'text-stone-500'}`}>{label}</p>
-        <p className="mt-1 font-serif text-3xl tabular-nums">{value}</p>
+        {/* Cormorant defaults to old-style figures (1 looks like I, 0 like o): force lining digits */}
+        <p className="mt-1 font-serif text-3xl lining-nums tabular-nums">{value}</p>
+        {hint && <p className={`mt-0.5 text-[10px] ${active ? 'opacity-80' : 'text-stone-500'}`}>{hint}</p>}
       </Tag>
     );
   };
@@ -298,7 +451,7 @@ export default function AdminApp() {
         {/* Stats / filters */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {statCard('Total RSVP', rsvps.length, statusFilter === 'all', () => setStatusFilter('all'))}
-          {statCard('Attending', attendingCount, statusFilter === 'yes', () => setStatusFilter((f) => (f === 'yes' ? 'all' : 'yes')), 'green')}
+          {statCard('Attending', attendingCount, statusFilter === 'yes', () => setStatusFilter((f) => (f === 'yes' ? 'all' : 'yes')), 'green', `${attendingRsvpCount} RSVP + ${plusOneCount} plus-one${plusOneCount === 1 ? '' : 's'}`)}
           {statCard('Declined', declinedCount, statusFilter === 'no', () => setStatusFilter((f) => (f === 'no' ? 'all' : 'no')), 'red')}
           {statCard('Plus-ones', plusOneCount, statusFilter === 'plus', () => setStatusFilter((f) => (f === 'plus' ? 'all' : 'plus')), 'gold')}
         </div>
@@ -306,9 +459,10 @@ export default function AdminApp() {
         {/* List */}
         <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-[0_8px_30px_rgba(16,47,39,0.06)]">
           {/* Desktop table */}
-          <div className="hidden sm:block overflow-x-auto">
+          {/* Only the rows scroll; the column header stays pinned */}
+          <div className="hidden sm:block max-h-[60dvh] overflow-auto">
             <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="border-b border-stone-200 bg-[#F8F4EA]">
+              <thead className="sticky top-0 z-10 bg-[#F8F4EA] shadow-[inset_0_-1px_0_#e7e5e4]">
                 <tr>
                   {(isPlusView ? ['Guest', 'Brought by', 'Contact', 'Date'] : ['Name', 'Status', 'Plus-one', 'Contact', 'Date', '']).map((h) => (
                     <th key={h} className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-stone-600">
@@ -336,15 +490,7 @@ export default function AdminApp() {
                       {formatDate(g.timestamp)}
                     </td>
                     <td className="px-2 py-2.5 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setPendingDelete(g)}
-                        title="Remove RSVP"
-                        aria-label={`Remove ${g.name}`}
-                        className="rounded-full p-1.5 text-stone-400 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <RowMenu name={g.name} onEdit={() => openEdit(g)} onDelete={() => setPendingDelete(g)} />
                     </td>
                   </tr>
                 ))}
@@ -353,7 +499,7 @@ export default function AdminApp() {
           </div>
 
           {/* Mobile cards */}
-          <div className="divide-y divide-stone-100 sm:hidden">
+          <div className="max-h-[60dvh] overflow-y-auto divide-y divide-stone-100 sm:hidden">
             {displayedPlusOnes.map(({ key, guest, host }) => (
               <div key={key} className="px-4 py-3">
                 <p className="text-sm font-medium leading-tight">{guest}</p>
@@ -369,15 +515,7 @@ export default function AdminApp() {
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   <StatusBadge attending={g.isAttending === 'yes'} small />
-                  <button
-                    type="button"
-                    onClick={() => setPendingDelete(g)}
-                    title="Remove RSVP"
-                    aria-label={`Remove ${g.name}`}
-                    className="rounded-full p-1.5 text-stone-400 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <RowMenu name={g.name} onEdit={() => openEdit(g)} onDelete={() => setPendingDelete(g)} />
                 </div>
               </div>
             ))}
@@ -393,9 +531,25 @@ export default function AdminApp() {
 
           {rsvps.length > 0 && (
             <div className="flex flex-col items-center gap-2 border-t border-stone-100 bg-[#F8F4EA]/70 px-4 py-3">
-              <p className="text-[10px] uppercase tracking-widest text-stone-500 tabular-nums">
-                Showing {rangeStart}–{rangeEnd} of {listLength}{isPlusView ? ' plus-ones' : ''}
-              </p>
+              <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+                <label className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-stone-500">
+                  Rows
+                  <select
+                    value={pageSize}
+                    onChange={(e) => setPageSize(Number(e.target.value))}
+                    className="rounded-full border border-stone-200 bg-white px-2.5 py-1 text-[11px] text-stone-700 tabular-nums outline-none focus:border-[#185844] cursor-pointer"
+                  >
+                    {PAGE_SIZES.map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <p className="text-[10px] uppercase tracking-widest text-stone-500 tabular-nums">
+                  Showing {rangeStart}–{rangeEnd} of {listLength}{isPlusView ? ' plus-ones' : ''}
+                </p>
+              </div>
               {totalPages > 1 && (
                 <div className="flex items-center gap-3">
                   <button
@@ -494,6 +648,158 @@ export default function AdminApp() {
                 )}
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit RSVP pop-up */}
+      <AnimatePresence>
+        {editDraft && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-[#102F27]/50 p-0 sm:p-4 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => !saving && setEditDraft(null)}
+          >
+            <motion.form
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="edit-title"
+              className="flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl"
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 24 }}
+              transition={{ duration: 0.25 }}
+              onClick={(e) => e.stopPropagation()}
+              onSubmit={(e) => {
+                e.preventDefault();
+                saveEdit();
+              }}
+            >
+              <div className="flex items-center justify-between gap-3 border-b border-stone-100 px-6 py-5">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.35em] text-[#78947F]">Edit RSVP</p>
+                  <h3 id="edit-title" className="mt-1 font-serif text-2xl leading-tight text-[#102F27]">
+                    {editDraft.row.name}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditDraft(null)}
+                  disabled={saving}
+                  aria-label="Close"
+                  className="rounded-full p-2 text-stone-500 hover:bg-stone-100 hover:text-stone-800 transition-colors cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
+                <label className="block">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-stone-500">Name</span>
+                  <input
+                    value={editDraft.name}
+                    onChange={(e) => setEditDraft({ ...editDraft, name: e.target.value })}
+                    className={inputClass}
+                    autoFocus
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-stone-500">Contact</span>
+                  <input
+                    value={editDraft.contact}
+                    onChange={(e) => setEditDraft({ ...editDraft, contact: e.target.value })}
+                    inputMode="tel"
+                    className={`${inputClass} font-mono`}
+                  />
+                </label>
+                <div>
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-stone-500">Status</span>
+                  <div className="mt-1.5 grid grid-cols-2 gap-2">
+                    {(['yes', 'no'] as const).map((v) => {
+                      const on = editDraft.isAttending === v;
+                      return (
+                        <button
+                          key={v}
+                          type="button"
+                          aria-pressed={on}
+                          onClick={() => setEditDraft({ ...editDraft, isAttending: v })}
+                          className={`rounded-full border px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors cursor-pointer ${
+                            on
+                              ? v === 'yes'
+                                ? 'border-[#185844] bg-[#185844] text-white'
+                                : 'border-[#9B2C2C] bg-[#9B2C2C] text-white'
+                              : 'border-stone-200 text-stone-600 hover:bg-[#F2EBDD]'
+                          }`}
+                        >
+                          {v === 'yes' ? 'Attending' : 'Declined'}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {editDraft.isAttending === 'yes' && (
+                  <div>
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-stone-500">
+                      Plus-ones <span className="tabular-nums">({editDraft.guests.length}/{MAX_GUESTS})</span>
+                    </span>
+                    <div className="mt-1.5 space-y-2">
+                      {editDraft.guests.map((guest, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <input
+                            value={guest}
+                            onChange={(e) => updateGuest(i, e.target.value)}
+                            placeholder={`Guest ${i + 1} full name`}
+                            className={`${inputClass} mt-0`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setEditDraft({ ...editDraft, guests: editDraft.guests.filter((_, j) => j !== i) })}
+                            aria-label={`Remove guest ${i + 1}`}
+                            className="shrink-0 rounded-full p-2 text-stone-400 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                      {editDraft.guests.length === 0 && <p className="text-xs text-stone-500">No plus-ones.</p>}
+                      {editDraft.guests.length < MAX_GUESTS && (
+                        <button
+                          type="button"
+                          onClick={() => setEditDraft({ ...editDraft, guests: [...editDraft.guests, ''] })}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-[#185844]/30 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#185844] hover:bg-[#185844] hover:text-white transition-colors cursor-pointer"
+                        >
+                          <Plus className="h-3.5 w-3.5" /> Add guest
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {editError && <p className="text-xs text-red-600">{editError}</p>}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 border-t border-stone-100 px-6 py-4">
+                <button
+                  type="button"
+                  onClick={() => setEditDraft(null)}
+                  disabled={saving}
+                  className="rounded-full border border-stone-200 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-600 hover:bg-[#F2EBDD] disabled:opacity-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-full bg-[#185844] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-white hover:bg-[#102F27] disabled:opacity-60 transition-colors cursor-pointer"
+                >
+                  {saving ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            </motion.form>
           </motion.div>
         )}
       </AnimatePresence>
