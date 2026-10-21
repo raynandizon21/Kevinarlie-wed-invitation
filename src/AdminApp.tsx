@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Archive, MoreVertical, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react';
+import { Archive, Check, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Plus, RotateCcw, Search, Trash2, X } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 // RSVP admin panel (ported from the wedding-invitation project, Kevin & Arlei colors)
@@ -17,7 +17,8 @@ interface RsvpRow {
 }
 
 /** Guests per page. */
-const PAGE_SIZES = [10, 25, 50, 100];
+// 0 = All (one page with every row)
+const PAGE_SIZES = [10, 25, 50, 100, 0];
 /** Plus-ones one RSVP may bring (same limit as the RSVP form and the server). */
 const MAX_GUESTS = 10;
 const inputClass =
@@ -72,6 +73,100 @@ function formatContact(raw: unknown): string {
   return `+63${digits}`;
 }
 
+// Search: name, plus-one names or contact number (09… and +639… both match)
+function matchesQuery(g: RsvpRow, q: string): boolean {
+  const s = q.trim().toLowerCase();
+  if (!s) return true;
+  if (g.name.toLowerCase().includes(s)) return true;
+  if (parseGuestNames(g.guest_names).some((n) => n.toLowerCase().includes(s))) return true;
+  const digits = s.replace(/\D/g, '').replace(/^0/, '');
+  return digits.length >= 3 && formatContact(g.contact).replace(/\D/g, '').includes(digits);
+}
+
+// Page / rows-per-page state for a list of `total` items; goes back to page 1 when `resetKey` changes
+function usePager(total: number, resetKey: string) {
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
+  useEffect(() => setPage(1), [resetKey, pageSize]);
+  const perPage = pageSize || Math.max(1, total);
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  useEffect(() => setPage((p) => Math.min(p, totalPages)), [totalPages]);
+  const start = (page - 1) * perPage;
+  return { page, setPage, pageSize, setPageSize, totalPages, total, start, end: Math.min(start + perPage, total) };
+}
+
+const SearchBox: React.FC<{ value: string; onChange: (v: string) => void; placeholder: string }> = ({ value, onChange, placeholder }) => (
+  <div className="relative">
+    <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" aria-hidden />
+    {/* 16px text on phones so iOS doesn't zoom in on focus */}
+    <input
+      type="search"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      aria-label={placeholder}
+      className="w-full rounded-full border border-stone-200 bg-white py-2 pl-10 pr-9 text-base text-[#102F27] outline-none placeholder:text-stone-400 focus:border-[#185844] focus:ring-2 focus:ring-[#185844]/15 sm:text-sm [&::-webkit-search-cancel-button]:hidden"
+    />
+    {value && (
+      <button
+        type="button"
+        onClick={() => onChange('')}
+        aria-label="Clear search"
+        className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-stone-400 hover:bg-stone-100 hover:text-stone-700 cursor-pointer"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    )}
+  </div>
+);
+
+// Rows picker, "1–10 of 100" and ‹ page › in one row
+const Pager: React.FC<{ pager: ReturnType<typeof usePager>; suffix?: string }> = ({ pager, suffix = '' }) => {
+  const { page, setPage, pageSize, setPageSize, totalPages, total, start, end } = pager;
+  const arrow =
+    'grid h-7 w-7 place-items-center rounded-full border border-stone-200 bg-white text-stone-700 disabled:opacity-40 hover:bg-[#F2EBDD] cursor-pointer';
+  return (
+    <div className="flex shrink-0 items-center justify-between gap-2 border-t border-stone-100 bg-[#F8F4EA]/70 px-3 py-2 sm:px-4">
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-stone-500">
+        Rows
+        <RowsPicker value={pageSize} onChange={setPageSize} />
+      </div>
+      <p className="truncate text-[10px] uppercase tracking-wider text-stone-500 tabular-nums">
+        {total === 0 ? 0 : start + 1}–{end} of {total}
+        {suffix}
+      </p>
+      <div className="flex items-center gap-1">
+        <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} aria-label="Previous page" className={arrow}>
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <span className="min-w-[2.75rem] text-center text-[10px] uppercase tracking-wider text-stone-500 tabular-nums">
+          {page}/{totalPages}
+        </span>
+        <button type="button" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} aria-label="Next page" className={arrow}>
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// `iconOnly` on phone cards, so the status badge still fits beside the name
+const RestoreButton: React.FC<{ busy: boolean; onClick: () => void; iconOnly?: boolean }> = ({ busy, onClick, iconOnly }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={busy}
+    title="Restore"
+    aria-label="Restore"
+    className={`inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border border-[#185844]/30 text-[#185844] hover:bg-[#185844] hover:text-white disabled:opacity-50 transition-colors cursor-pointer ${
+      iconOnly ? 'h-8 w-8' : 'px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]'
+    }`}
+  >
+    <RotateCcw className={`${iconOnly ? 'h-3.5 w-3.5' : 'h-3 w-3'} ${busy ? 'animate-spin' : ''}`} />
+    {!iconOnly && (busy ? 'Restoring…' : 'Restore')}
+  </button>
+);
+
 const StatusBadge: React.FC<{ attending: boolean; small?: boolean }> = ({ attending, small }) => (
   <span
     className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-full ${small ? 'text-[9px]' : 'text-[10px]'} font-bold uppercase tracking-wider ${
@@ -81,6 +176,65 @@ const StatusBadge: React.FC<{ attending: boolean; small?: boolean }> = ({ attend
     {attending ? 'Attending' : 'Declined'}
   </span>
 );
+
+// Rows-per-page picker. A small custom menu instead of <select>, whose native iOS picker is huge.
+const RowsPicker: React.FC<{ value: number; onChange: (n: number) => void }> = ({ value, onChange }) => {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label="Rows per page"
+        className="flex items-center gap-1 rounded-full border border-stone-200 bg-white py-1 pl-2.5 pr-1.5 text-[11px] text-stone-700 tabular-nums hover:border-[#185844]/40 cursor-pointer"
+      >
+        {value || 'All'}
+        <ChevronDown className={`h-3 w-3 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[80]" onClick={() => setOpen(false)} />
+          {/* Opens upward: the pager sits at the bottom of the list */}
+          <ul
+            role="listbox"
+            className="absolute bottom-full left-0 z-[81] mb-1.5 w-20 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 shadow-[0_8px_30px_rgba(16,47,39,0.15)]"
+          >
+            {PAGE_SIZES.map((n) => (
+              <li key={n}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={n === value}
+                  onClick={() => {
+                    onChange(n);
+                    setOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between px-3 py-1.5 text-left text-xs tabular-nums transition-colors cursor-pointer hover:bg-[#F2EBDD] ${
+                    n === value ? 'font-semibold text-[#185844]' : 'text-stone-700'
+                  }`}
+                >
+                  {n || 'All'}
+                  {n === value && <Check className="h-3 w-3" />}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+};
 
 // Three-dot row menu (Edit / Delete). Fixed position so the table's overflow never clips it.
 const RowMenu: React.FC<{ name: string; onEdit: () => void; onDelete: () => void }> = ({ name, onEdit, onDelete }) => {
@@ -174,9 +328,10 @@ export default function AdminApp() {
   const [archived, setArchived] = useState<RsvpRow[]>([]);
   const [archiveLoading, setArchiveLoading] = useState(false);
   const [restoringId, setRestoringId] = useState<number | null>(null);
-  const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
+  const [query, setQuery] = useState('');
+  const [archiveQuery, setArchiveQuery] = useState('');
+  const [archiveFilter, setArchiveFilter] = useState<'all' | 'yes' | 'no'>('all');
   // Edit pop-up
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
   const [saving, setSaving] = useState(false);
@@ -351,36 +506,36 @@ export default function AdminApp() {
     };
   }, []);
 
-  useEffect(() => {
-    setPage(1);
-  }, [statusFilter, pageSize]);
-
+  const isPlusView = statusFilter === 'plus';
   const filteredRsvps = rsvps.filter((g) => {
     if (statusFilter === 'plus') {
       if (!(g.isAttending === 'yes' && g.brings_guest === 'yes' && parseGuestNames(g.guest_names).length > 0)) return false;
     } else if (statusFilter !== 'all' && g.isAttending !== statusFilter) return false;
-    return true;
+    // In the plus-ones view the search runs per guest below
+    return isPlusView || matchesQuery(g, query);
   });
 
   // Plus-ones view: one row per guest name from guest_names, with the RSVP that brought them
-  const isPlusView = statusFilter === 'plus';
+  const q = query.trim().toLowerCase();
   const plusOneRows = isPlusView
     ? filteredRsvps.flatMap((host) =>
-        parseGuestNames(host.guest_names).map((guest, i) => ({ key: `${host.id}-${i}`, guest, host }))
+        parseGuestNames(host.guest_names)
+          .map((guest, i) => ({ key: `${host.id}-${i}`, guest, host }))
+          .filter(({ guest }) => !q || guest.toLowerCase().includes(q) || matchesQuery({ ...host, guest_names: null }, q))
       )
     : [];
   const listLength = isPlusView ? plusOneRows.length : filteredRsvps.length;
 
-  const totalPages = Math.max(1, Math.ceil(listLength / pageSize));
-  useEffect(() => {
-    setPage((p) => Math.min(p, totalPages));
-  }, [totalPages]);
+  const pager = usePager(listLength, `${statusFilter}|${query}`);
+  const displayedRsvps = isPlusView ? [] : filteredRsvps.slice(pager.start, pager.end);
+  const displayedPlusOnes = plusOneRows.slice(pager.start, pager.end);
 
-  const pageStart = (page - 1) * pageSize;
-  const displayedRsvps = isPlusView ? [] : filteredRsvps.slice(pageStart, pageStart + pageSize);
-  const displayedPlusOnes = plusOneRows.slice(pageStart, pageStart + pageSize);
-  const rangeStart = listLength === 0 ? 0 : pageStart + 1;
-  const rangeEnd = Math.min(pageStart + pageSize, listLength);
+  const filteredArchived = archived.filter(
+    (g) => (archiveFilter === 'all' || g.isAttending === archiveFilter) && matchesQuery(g, archiveQuery)
+  );
+  const archivePager = usePager(filteredArchived.length, `${archiveFilter}|${archiveQuery}`);
+  const displayedArchived = filteredArchived.slice(archivePager.start, archivePager.end);
+
   const formatDate = (ts: string) =>
     ts ? new Date(ts).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' }) : '';
 
@@ -410,57 +565,55 @@ export default function AdminApp() {
     return (
       <Tag
         {...(onClick ? { type: 'button' as const, onClick, 'aria-pressed': active } : {})}
-        className={`rounded-2xl border px-4 py-3 text-left transition-colors ${onClick ? 'cursor-pointer' : ''} ${look}`}
+        className={`min-w-0 rounded-xl border px-2.5 py-2 text-left transition-colors sm:rounded-2xl sm:px-4 sm:py-3 ${onClick ? 'cursor-pointer' : ''} ${look}`}
       >
-        <p className={`text-[10px] uppercase tracking-[0.25em] ${active ? 'opacity-80' : 'text-stone-500'}`}>{label}</p>
+        <p className={`truncate text-[8.5px] uppercase tracking-[0.06em] sm:text-[10px] sm:tracking-[0.25em] ${active ? 'opacity-80' : 'text-stone-500'}`}>
+          {/* "Total RSVP" doesn't fit four across on a phone */}
+          {label === 'Total RSVP' ? <><span className="sm:hidden">Total</span><span className="hidden sm:inline">{label}</span></> : label}
+        </p>
         {/* Cormorant defaults to old-style figures (1 looks like I, 0 like o): force lining digits */}
-        <p className="mt-1 font-serif text-3xl lining-nums tabular-nums">{value}</p>
-        {hint && <p className={`mt-0.5 text-[10px] ${active ? 'opacity-80' : 'text-stone-500'}`}>{hint}</p>}
+        <p className="mt-0.5 font-serif text-2xl leading-none lining-nums tabular-nums sm:mt-1 sm:text-3xl">{value}</p>
+        {hint && <p className={`mt-1 hidden truncate text-[10px] sm:block ${active ? 'opacity-80' : 'text-stone-500'}`}>{hint}</p>}
       </Tag>
     );
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[#F2EBDD] text-[#102F27] font-sans">
-      {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-[#102F27]/10 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-[clamp(1rem,4vw,1.5rem)] py-4">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.35em] text-[#78947F]">Admin Panel</p>
-            <h1 className="font-serif text-xl leading-tight">
-              Kevin <span className="font-script text-[#B08A4F]">&amp;</span> Arlei
-            </h1>
-          </div>
+    // Fits the screen exactly on any device: header, stats and pager stay put, only the list scrolls
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-[#F2EBDD] text-[#102F27] font-sans">
+      <main className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-3 px-[clamp(0.75rem,4vw,1.5rem)] py-3 sm:gap-4 sm:py-5">
+        <div className="flex shrink-0 items-center justify-between gap-3">
+          <h2 className="font-serif text-[clamp(1.4rem,5vw,2.25rem)] leading-none">Guest RSVPs</h2>
           <button
             type="button"
             onClick={() => {
               setArchiveOpen(true);
               fetchArchived();
             }}
-            className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest text-[#185844] hover:bg-[#F2EBDD] transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 rounded-full border border-[#102F27]/15 bg-white/60 px-3.5 py-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest text-[#185844] hover:bg-white transition-colors cursor-pointer"
           >
             <Archive className="h-4 w-4" aria-hidden />
             <span>Archive</span>
           </button>
         </div>
-      </header>
-
-      <main className="mx-auto max-w-5xl px-[clamp(1rem,4vw,1.5rem)] py-6 space-y-5">
-        <h2 className="font-serif text-[clamp(1.75rem,6vw,2.5rem)] leading-none">Guest RSVPs</h2>
 
         {/* Stats / filters */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="grid shrink-0 grid-cols-4 gap-2 sm:gap-3">
           {statCard('Total RSVP', rsvps.length, statusFilter === 'all', () => setStatusFilter('all'))}
           {statCard('Attending', attendingCount, statusFilter === 'yes', () => setStatusFilter((f) => (f === 'yes' ? 'all' : 'yes')), 'green', `${attendingRsvpCount} RSVP + ${plusOneCount} plus-one${plusOneCount === 1 ? '' : 's'}`)}
           {statCard('Declined', declinedCount, statusFilter === 'no', () => setStatusFilter((f) => (f === 'no' ? 'all' : 'no')), 'red')}
           {statCard('Plus-ones', plusOneCount, statusFilter === 'plus', () => setStatusFilter((f) => (f === 'plus' ? 'all' : 'plus')), 'gold')}
         </div>
 
+        <div className="shrink-0">
+          <SearchBox value={query} onChange={setQuery} placeholder="Search name, plus-one or contact" />
+        </div>
+
         {/* List */}
-        <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-[0_8px_30px_rgba(16,47,39,0.06)]">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-[0_8px_30px_rgba(16,47,39,0.06)]">
           {/* Desktop table */}
           {/* Only the rows scroll; the column header stays pinned */}
-          <div className="hidden sm:block max-h-[60dvh] overflow-auto">
+          <div className={`hidden min-h-0 overflow-auto sm:block ${listLength ? 'flex-1' : ''}`}>
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="sticky top-0 z-10 bg-[#F8F4EA] shadow-[inset_0_-1px_0_#e7e5e4]">
                 <tr>
@@ -499,7 +652,7 @@ export default function AdminApp() {
           </div>
 
           {/* Mobile cards */}
-          <div className="max-h-[60dvh] overflow-y-auto divide-y divide-stone-100 sm:hidden">
+          <div className={`min-h-0 overflow-y-auto divide-y divide-stone-100 sm:hidden ${listLength ? 'flex-1' : ''}`}>
             {displayedPlusOnes.map(({ key, guest, host }) => (
               <div key={key} className="px-4 py-3">
                 <p className="text-sm font-medium leading-tight">{guest}</p>
@@ -523,58 +676,13 @@ export default function AdminApp() {
 
           {error && <p className="px-4 py-6 text-center text-xs text-red-600">{error}</p>}
           {!error && !loading && rsvps.length === 0 && (
-            <p className="px-4 py-10 text-center text-xs uppercase tracking-widest text-stone-500">No RSVPs yet</p>
+            <p className="grid flex-1 place-items-center px-4 py-10 text-center text-xs uppercase tracking-widest text-stone-500">No RSVPs yet</p>
           )}
           {rsvps.length > 0 && listLength === 0 && (
-            <p className="px-4 py-8 text-center text-xs uppercase tracking-widest text-stone-500">No guests match this filter.</p>
+            <p className="grid flex-1 place-items-center px-4 py-8 text-center text-xs uppercase tracking-widest text-stone-500">{query.trim() ? `No results for “${query.trim()}”.` : 'No guests match this filter.'}</p>
           )}
 
-          {rsvps.length > 0 && (
-            <div className="flex flex-col items-center gap-2 border-t border-stone-100 bg-[#F8F4EA]/70 px-4 py-3">
-              <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-                <label className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-stone-500">
-                  Rows
-                  <select
-                    value={pageSize}
-                    onChange={(e) => setPageSize(Number(e.target.value))}
-                    className="rounded-full border border-stone-200 bg-white px-2.5 py-1 text-[11px] text-stone-700 tabular-nums outline-none focus:border-[#185844] cursor-pointer"
-                  >
-                    {PAGE_SIZES.map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <p className="text-[10px] uppercase tracking-widest text-stone-500 tabular-nums">
-                  Showing {rangeStart}–{rangeEnd} of {listLength}{isPlusView ? ' plus-ones' : ''}
-                </p>
-              </div>
-              {totalPages > 1 && (
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page <= 1}
-                    className="rounded-full border border-stone-200 bg-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-stone-700 disabled:opacity-40 hover:bg-[#F2EBDD] cursor-pointer"
-                  >
-                    Previous
-                  </button>
-                  <span className="min-w-[6rem] text-center text-[10px] uppercase tracking-widest text-stone-500 tabular-nums">
-                    Page {page} / {totalPages}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page >= totalPages}
-                    className="rounded-full border border-stone-200 bg-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-stone-700 disabled:opacity-40 hover:bg-[#F2EBDD] cursor-pointer"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+          {rsvps.length > 0 && <Pager pager={pager} suffix={isPlusView ? ' plus-ones' : ''} />}
         </div>
       </main>
 
@@ -593,18 +701,18 @@ export default function AdminApp() {
               role="dialog"
               aria-modal="true"
               aria-labelledby="archive-title"
-              className="flex max-h-[85dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl"
+              className="flex h-[100dvh] w-full max-w-5xl flex-col overflow-hidden sm:h-[85dvh] sm:rounded-3xl bg-[#F2EBDD] shadow-2xl"
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 24 }}
               transition={{ duration: 0.25 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between gap-3 border-b border-stone-100 px-6 py-5">
+              <div className="flex shrink-0 items-center justify-between gap-3 px-[clamp(1rem,4vw,1.5rem)] pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.35em] text-[#78947F]">Removed RSVPs</p>
                   <h3 id="archive-title" className="mt-1 font-serif text-2xl text-[#102F27]">
-                    Archive <span className="text-stone-400 tabular-nums">({archived.length})</span>
+                    Archive <span className="text-stone-400 lining-nums tabular-nums">({archived.length})</span>
                   </h3>
                 </div>
                 <button
@@ -617,35 +725,96 @@ export default function AdminApp() {
                 </button>
               </div>
 
-              <div className="flex-1 divide-y divide-stone-100 overflow-y-auto">
-                {archived.map((g) => (
-                  <div key={g.id} className="flex items-center justify-between gap-3 px-6 py-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-[#102F27]">{g.name}</p>
-                      <p className="mt-0.5 text-[11px] text-stone-500">
-                        {g.isAttending === 'yes' ? 'Attending' : 'Declined'}
-                        {parseGuestNames(g.guest_names).length ? ` · +${parseGuestNames(g.guest_names).length} guest(s)` : ''}
-                        {' · '}
-                        {formatDate(g.timestamp)}
-                      </p>
+              <div className="shrink-0 px-[clamp(1rem,4vw,1.5rem)] pb-3">
+                <SearchBox value={archiveQuery} onChange={setArchiveQuery} placeholder="Search name, plus-one or contact" />
+                {/* Status filter chips with counts */}
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  {(
+                    [
+                      ['all', 'All', archived.length],
+                      ['yes', 'Attending', archived.filter((g) => g.isAttending === 'yes').length],
+                      ['no', 'Declined', archived.filter((g) => g.isAttending === 'no').length],
+                    ] as const
+                  ).map(([key, label, count]) => {
+                    const active = archiveFilter === key;
+                    const on = key === 'yes' ? 'border-[#185844] bg-[#185844] text-white' : key === 'no' ? 'border-[#9B2C2C] bg-[#9B2C2C] text-white' : 'border-[#102F27] bg-[#102F27] text-[#F2EBDD]';
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => setArchiveFilter(key)}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors cursor-pointer ${
+                          active ? on : 'border-stone-200 bg-white text-stone-600 hover:border-[#102F27]/30'
+                        }`}
+                      >
+                        {label}
+                        <span className={`tabular-nums ${active ? 'opacity-80' : 'text-stone-400'}`}>{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Same layout as the main list: table on wider screens, cards on phones */}
+              <div className="mx-[clamp(0.75rem,4vw,1.5rem)] mb-[max(0.75rem,env(safe-area-inset-bottom))] flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-[0_8px_30px_rgba(16,47,39,0.06)] sm:mb-5">
+                <div className={`hidden min-h-0 overflow-auto sm:block ${filteredArchived.length ? 'flex-1' : ''}`}>
+                  <table className="w-full text-left text-sm whitespace-nowrap">
+                    <thead className="sticky top-0 z-10 bg-[#F8F4EA] shadow-[inset_0_-1px_0_#e7e5e4]">
+                      <tr>
+                        {['Name', 'Status', 'Plus-one', 'Contact', 'Date', ''].map((h) => (
+                          <th key={h} className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-stone-600">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-100">
+                      {displayedArchived.map((g) => (
+                        <tr key={g.id} className="hover:bg-[#F8F4EA]/60 transition-colors">
+                          <td className="px-4 py-2.5 font-medium text-[#102F27]">{g.name}</td>
+                          <td className="px-4 py-2.5"><StatusBadge attending={g.isAttending === 'yes'} /></td>
+                          <td className="px-4 py-2.5 text-xs text-stone-600 whitespace-normal max-w-[12rem]">{formatPlusOneGuest(g)}</td>
+                          <td className="px-4 py-2.5 font-mono text-stone-500">{formatContact(g.contact)}</td>
+                          <td className="px-4 py-2.5 text-xs text-stone-500">{formatDate(g.timestamp)}</td>
+                          <td className="px-3 py-2.5 text-right">
+                            <RestoreButton busy={restoringId === g.id} onClick={() => restoreRsvp(g)} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className={`min-h-0 overflow-y-auto divide-y divide-stone-100 sm:hidden ${filteredArchived.length ? 'flex-1' : ''}`}>
+                  {displayedArchived.map((g) => (
+                    <div key={g.id} className="flex items-start justify-between gap-2 px-4 py-3">
+                      <div className="min-w-0 flex-1">
+                        {/* Status right after the name */}
+                        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium leading-tight">
+                          {g.name}
+                          <StatusBadge attending={g.isAttending === 'yes'} small />
+                        </p>
+                        {g.brings_guest === 'yes' && <p className="mt-0.5 text-[10px] text-stone-500">Plus-one: {formatPlusOneGuest(g)}</p>}
+                        <p className="mt-0.5 font-mono text-xs text-stone-500">{formatContact(g.contact)}</p>
+                      </div>
+                      <div className="flex shrink-0 self-center">
+                        <RestoreButton busy={restoringId === g.id} onClick={() => restoreRsvp(g)} iconOnly />
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => restoreRsvp(g)}
-                      disabled={restoringId === g.id}
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#185844]/30 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#185844] hover:bg-[#185844] hover:text-white disabled:opacity-50 transition-colors cursor-pointer"
-                    >
-                      <RotateCcw className="h-3.5 w-3.5" />
-                      {restoringId === g.id ? 'Restoring…' : 'Restore'}
-                    </button>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
                 {!archiveLoading && archived.length === 0 && (
-                  <p className="px-6 py-12 text-center text-xs uppercase tracking-widest text-stone-500">The archive is empty</p>
+                  <p className="grid flex-1 place-items-center px-6 py-12 text-center text-xs uppercase tracking-widest text-stone-500">The archive is empty</p>
                 )}
                 {archiveLoading && archived.length === 0 && (
-                  <p className="px-6 py-12 text-center text-xs uppercase tracking-widest text-stone-400">Loading…</p>
+                  <p className="grid flex-1 place-items-center px-6 py-12 text-center text-xs uppercase tracking-widest text-stone-400">Loading…</p>
                 )}
+                {archived.length > 0 && filteredArchived.length === 0 && (
+                  <p className="grid flex-1 place-items-center px-4 py-8 text-center text-xs uppercase tracking-widest text-stone-500">{archiveQuery.trim() ? `No results for “${archiveQuery.trim()}”.` : 'Nothing here for this filter.'}</p>
+                )}
+                {archived.length > 0 && <Pager pager={archivePager} />}
               </div>
             </motion.div>
           </motion.div>

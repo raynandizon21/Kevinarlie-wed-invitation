@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import confetti from 'canvas-confetti';
 import { ColorPalette } from '../types/wedding';
 import { melodyPlayer } from '../utils/audioSynth';
 import realisticEnvelopeImg from '../assets/images/realistic_envelope_isolated.png';
@@ -34,22 +33,6 @@ export const EnvelopeHero: React.FC<EnvelopeHeroProps> = ({
       melodyPlayer.playOpenEnvelopeSound();
     } catch {
       // Audio fallback
-    }
-
-    // Launch celebratory golden sparkle confetti
-    try {
-      confetti({
-        particleCount: 36,
-        spread: 60,
-        origin: { y: 0.52 },
-        colors: ['#B08A4F', '#B08A4F', '#F5E6C8', '#78947F', '#FFFFFF'],
-        ticks: 180,
-        gravity: 0.85,
-        scalar: 0.85,
-        disableForReducedMotion: true,
-      });
-    } catch {
-      // Confetti fallback
     }
 
     // Smooth cinematic fade out transition to menu page

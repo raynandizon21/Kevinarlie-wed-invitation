@@ -64,8 +64,8 @@ expecting a visible change.
 
 ## RSVP data
 
-- Database `rsvp`, table `rsvps` — **shared with the separate `wedding-invitation` project** (Reb & Arielle).
-  Never drop, rename or rewrite existing columns/rows; only add.
+- Database `kevinarlei_rsvp` (`DB_NAME` in `.env`; the code falls back to `rsvp`, the separate `wedding-invitation`
+  project's database), table `rsvps`. Never drop, rename or rewrite existing columns/rows; only add.
 - Columns: `id, name, contact, isAttending ('yes'|'no'), timestamp, source ('web'|'qr'), brings_guest, guest_names (JSON array), active (1 = active, 0 = soft deleted)`.
 - **Soft delete only**: `DELETE /api/rsvps/:id` sets `active = 0`; `GET /api/rsvps` returns `active = 1`;
   `GET /api/rsvps/archived` + `PATCH /api/rsvps/:id/restore` power the admin Archive.
@@ -79,7 +79,7 @@ expecting a visible change.
 - Screenshot with headless Edge via `puppeteer-core` (Edge path `C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe`);
   tap the envelope first (look for the text `TAP TO OPEN`).
 - Any test RSVP must be named `TEST …` and deleted afterwards:
-  `DELETE FROM rsvp.rsvps WHERE name LIKE 'TEST %';` (via `C:/xampp/mysql/bin/mysql.exe -u root`).
+  `DELETE FROM kevinarlei_rsvp.rsvps WHERE name LIKE 'TEST %';` (via `C:/xampp/mysql/bin/mysql.exe -u root`).
 - Stop any test server you start (by PID) so it never holds port 3002.
 
 ## Not done yet

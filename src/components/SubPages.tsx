@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import confetti from 'canvas-confetti';
 import { ChevronLeft, ChevronDown, Navigation, Plus, X } from 'lucide-react';
 import { EntourageCategory, TimelineItem } from '../types/wedding';
 import { getRsvpSourceForSubmit } from '../rsvpSource';
@@ -29,14 +28,14 @@ const reveal = {
 const pageX = 'px-[clamp(1rem,5vw,1.5rem)]';
 const belowBack = 'pt-[max(4.5rem,calc(env(safe-area-inset-top,0px)+3.5rem))]';
 
-// Back chip that stays at the top-left while the page scrolls
+// Plain Back link (no chip) that stays at the top-left while the page scrolls
 const BackChip: React.FC<{ onBack: () => void; light?: boolean }> = ({ onBack, light = false }) => (
   <div className="sticky top-0 z-20 h-0">
     <button
       type="button"
       onClick={onBack}
-      className={`absolute left-[clamp(1rem,5vw,1.5rem)] top-[max(1rem,env(safe-area-inset-top,0px))] flex items-center rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.25em] backdrop-blur-md transition-colors cursor-pointer ${
-        light ? 'bg-[#102F27]/35 text-white hover:bg-[#102F27]/55' : 'bg-[#F2EBDD]/85 text-[#102F27] shadow-sm hover:text-[#B08A4F]'
+      className={`absolute left-[clamp(0.5rem,3vw,1rem)] top-[max(0.75rem,env(safe-area-inset-top,0px))] flex items-center px-2 py-2 text-[10px] uppercase tracking-[0.25em] transition-colors cursor-pointer ${
+        light ? 'text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.45)] hover:text-[#E6D3AE]' : 'text-[#102F27] hover:text-[#B08A4F]'
       }`}
     >
       <ChevronLeft className="mr-0.5 h-3.5 w-3.5" /> Back
@@ -128,8 +127,9 @@ export const DetailsPage: React.FC<DetailsPageProps> = ({
                   className={`w-[46%] shrink-0 bg-white p-2 pb-1 shadow-[0_10px_25px_rgba(16,47,39,0.15)] ${flip ? 'rotate-3' : '-rotate-3'}`}
                 >
                   <img src={v.img} alt={v.name} className="block aspect-[4/5] w-full object-cover" />
-                  <p className="py-1.5 text-center font-['Parisienne'] text-xl leading-none text-[#185844]">
-                    the {v.label.toLowerCase()}
+                  {/* Same voice as the "Ceremony & Reception" title: light Oswald caps in forest */}
+                  <p className="pb-2 pt-2.5 pl-[0.22em] text-center font-['Oswald'] text-xs font-light uppercase leading-none tracking-[0.22em] text-[#102F27]">
+                    The {v.label}
                   </p>
                 </div>
                 <div className="min-w-0 flex-1">
@@ -509,9 +509,6 @@ export const RsvpForm: React.FC<{
       }
 
       setSubmitted(true);
-      if (isAttending === 'yes') {
-        confetti({ particleCount: 70, spread: 80, origin: { y: 0.6 }, colors: ['#185844', '#78947F', '#B08A4F', '#F2EBDD'] });
-      }
     } catch (err) {
       console.error('Failed to submit RSVP:', err);
       setError(err instanceof Error ? err.message : 'Sorry, there was an error submitting your RSVP. Please try again.');
