@@ -774,7 +774,7 @@ const FaqAnswer: React.FC<{ text: string }> = ({ text }) => {
   );
 };
 
-const FaqAccordion: React.FC = () => {
+export const FaqAccordion: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   return (
     <ul className="mt-5 divide-y divide-[#B08A4F]/20 border-t border-[#B08A4F]/20">

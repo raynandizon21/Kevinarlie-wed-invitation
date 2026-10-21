@@ -164,6 +164,80 @@ export const PhotoPage: React.FC<{
   );
 };
 
+// --- DESKTOP: the same three photos as wide bands between the website sections, same layouts
+// (ivory: photo left / sage: photo centered / forest: photo right). They animate in on scroll.
+const inView = (delay = 0, x = 0) => ({
+  initial: { opacity: 0, y: x ? 0 : 24, x },
+  whileInView: { opacity: 1, y: 0, x: 0 },
+  viewport: { once: true, margin: '-80px' },
+  transition: { duration: 1.1, delay, ease: easeOut },
+});
+const DesktopPhoto: React.FC<{ src: string; alt: string; position?: string; className?: string }> = ({ src, alt, position, className = '' }) => (
+  <div className={`relative overflow-hidden ${className}`}>
+    <motion.img
+      src={src}
+      alt={alt}
+      initial={{ scale: 1.12 }}
+      whileInView={{ scale: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 6, ease: easeOut }}
+      draggable={false}
+      style={{ objectPosition: position ?? 'center' }}
+      className="h-full w-full object-cover"
+    />
+  </div>
+);
+
+export const DesktopPhotoBand: React.FC<{ photo: number; groomName: string; brideName: string }> = ({ photo, groomName, brideName }) => {
+  const slide = STORY_PHOTOS[photo] ?? STORY_PHOTOS[0];
+  const names = (tone: string) => (
+    <p className={`font-['Oswald'] text-xs font-light uppercase tracking-[0.5em] ${tone}`}>
+      {groomName} &amp; {brideName}
+    </p>
+  );
+  const script = (tone: string, extra = '') => (
+    <p className={`mt-4 font-['Parisienne'] text-[clamp(3.5rem,5.5vw,5rem)] leading-[1.05] ${tone} ${extra}`}>{slide.caption}</p>
+  );
+
+  if (slide.layout === 'sage') {
+    return (
+      <section className="bg-[#78947F] py-28 text-center text-white">
+        <motion.div {...inView()}>
+          {names('text-[#F2EBDD]')}
+          {script('text-white')}
+        </motion.div>
+        <motion.div {...inView(0.15)} className="relative mx-auto mt-14 w-[min(56rem,80vw)]">
+          <span className="absolute -inset-4 border border-[#F2EBDD]/70" />
+          <DesktopPhoto src={slide.src} alt={slide.caption} position={slide.position} className="aspect-[16/9] shadow-[0_30px_60px_-30px_rgba(16,47,39,0.7)]" />
+        </motion.div>
+      </section>
+    );
+  }
+
+  const ivory = slide.layout === 'ivory';
+  return (
+    <section className={ivory ? 'bg-[#F2EBDD] py-28 text-[#102F27]' : 'bg-[#102F27] py-28 text-white'}>
+      <div className="mx-auto grid max-w-6xl grid-cols-[1.15fr_1fr] items-center gap-20 px-10">
+        <motion.div {...inView(0.1, ivory ? -32 : 32)} className={`relative ${ivory ? '' : 'order-2'}`}>
+          {/* gold outline offset away from the text */}
+          <span className={`absolute top-5 h-full w-full border border-[#B08A4F]/70 ${ivory ? 'left-5' : '-left-5'}`} />
+          <DesktopPhoto
+            src={slide.src}
+            alt={slide.caption}
+            position={slide.position}
+            className={`aspect-[4/5] ${ivory ? 'shadow-[0_30px_60px_-30px_rgba(16,47,39,0.55)]' : 'shadow-[0_30px_60px_-24px_rgba(0,0,0,0.6)]'}`}
+          />
+        </motion.div>
+        <motion.div {...inView(0.25)} className={ivory ? 'text-right' : 'order-1'}>
+          {names(ivory ? 'text-[#B08A4F]' : 'text-[#E6D3AE]')}
+          {script(ivory ? 'text-[#102F27]' : 'text-white', ivory ? 'ml-auto max-w-[24rem]' : 'max-w-[24rem]')}
+          <Sprig className={`mt-6 w-16 ${ivory ? 'ml-auto text-[#185844]/70' : 'text-[#E6D3AE]/70'}`} />
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
 // --- CLOSING: thank-you note, then back to the start. After the RSVP it returns on its own.
 export const ThanksPage: React.FC<{
   onRestart: () => void;

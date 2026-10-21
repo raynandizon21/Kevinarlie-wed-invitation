@@ -288,7 +288,7 @@ export default function App() {
           ========================================================================= */}
       {showDesktopSite && (
         <DesktopSite
-          section={activeView === 'hub' || activeView === 'faqs' || isPhotoView(activeView) || activeView === 'thanks' ? 'top' : (activeView as 'details' | 'timeline' | 'entourage' | 'rsvp')}
+          section={activeView === 'hub' || isPhotoView(activeView) || activeView === 'thanks' ? 'top' : (activeView as 'details' | 'timeline' | 'entourage' | 'faqs' | 'rsvp')}
           groomName={weddingData.groomNickname || weddingData.groom.split(' ')[0]}
           brideName={weddingData.brideNickname || weddingData.bride.split(' ')[0]}
           displayDate={weddingData.displayDate}

@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { Navigation } from 'lucide-react';
+import { Navigation, Plus } from 'lucide-react';
 import { EntourageCategory, TimelineItem } from '../types/wedding';
-import { DRESS_CODE, RsvpForm, TimelineIcon } from './SubPages';
+import { DRESS_CODE, FaqAccordion, RsvpForm, TimelineIcon } from './SubPages';
+import { DesktopPhotoBand, ThanksPage } from './GalleryPages';
 import { Sprig } from './Sprig';
 import jardinVenueImg from '../assets/images/jardin_venue_1791676573787.jpg';
 import meadowCoupleImg from '../assets/images/wedding_couple_meadow_1791602914531.jpg';
@@ -14,7 +15,8 @@ import weddingAttireTitleImg from '../assets/images/wedding_attire_hd_forest.png
 
 
 // Desktop (lg+) website version of the invitation: one long, sectioned page.
-export type DesktopSection = 'top' | 'details' | 'timeline' | 'entourage' | 'rsvp';
+// Same order as the phone story: Details, photo, Timeline, photo, Entourage, photo, FAQs, RSVP.
+export type DesktopSection = 'top' | 'details' | 'timeline' | 'entourage' | 'faqs' | 'rsvp';
 
 const reveal = {
   initial: { opacity: 0, y: 24 },
@@ -25,10 +27,11 @@ const reveal = {
 
 const NAV_LEFT: Array<{ id: DesktopSection; label: string }> = [
   { id: 'details', label: 'Details' },
-  { id: 'entourage', label: 'Entourage' },
+  { id: 'timeline', label: 'Timeline' },
 ];
 const NAV_RIGHT: Array<{ id: DesktopSection; label: string }> = [
-  { id: 'timeline', label: 'Timeline' },
+  { id: 'entourage', label: 'Entourage' },
+  { id: 'faqs', label: 'FAQs' },
   { id: 'rsvp', label: 'RSVP' },
 ];
 
@@ -43,11 +46,11 @@ const scrollToSection = (id: DesktopSection, smooth = true) => {
   }
 };
 
-// Section title in the hero's style: gold script line + tall uppercase Oswald + leaf sprig
-const SectionHeading: React.FC<{ eyebrow: string; title: string }> = ({ eyebrow, title }) => (
+// Section title: tall uppercase Oswald + leaf sprig (optional gold script line above)
+const SectionHeading: React.FC<{ eyebrow?: string; title: string }> = ({ eyebrow, title }) => (
   <motion.div {...reveal} className="mb-16 text-center">
-    <p className="font-script text-3xl text-[#B08A4F]">{eyebrow}</p>
-    <h2 className="mt-2 font-['Oswald'] text-[clamp(2.25rem,3.6vw,3.25rem)] font-light uppercase tracking-[0.35em] text-[#102F27]">
+    {eyebrow && <p className="mb-2 font-script text-3xl text-[#B08A4F]">{eyebrow}</p>}
+    <h2 className="font-['Oswald'] text-[clamp(2.25rem,3.6vw,3.25rem)] font-light uppercase tracking-[0.35em] text-[#102F27]">
       {title}
     </h2>
     <Sprig className="mx-auto mt-4 w-16 text-[#185844]/70" />
@@ -119,6 +122,16 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+  // After an RSVP: the popup, then a full-screen thank-you; "Back to the beginning" (or 8s) returns to the top
+  // with a fresh form
+  const [showThanks, setShowThanks] = useState(false);
+  const [formKey, setFormKey] = useState(0);
+  const restart = () => {
+    setShowThanks(false);
+    setFormKey((k) => k + 1);
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  };
+
   const navText = `text-[12px] uppercase tracking-[0.22em] ${scrolled ? 'text-[#102F27]/75' : 'text-white'}`;
   const navLink = 'py-2 hover:opacity-70 transition-opacity cursor-pointer';
 
@@ -239,7 +252,7 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
       {/* ================= DETAILS ================= */}
       <section id="section-details" className="scroll-mt-20 bg-white pb-28 pt-24">
         <div className="mx-auto max-w-6xl px-10">
-          <SectionHeading eyebrow="when & where" title="Ceremony & Reception" />
+          <SectionHeading title="Ceremony & Reception" />
 
           <div className="grid grid-cols-2 gap-16">
             {venues.map((v, i) => (
@@ -302,46 +315,10 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
         </motion.div>
       </section>
 
-      {/* ================= ENTOURAGE (wedding-program style) ================= */}
-      <section id="section-entourage" className="scroll-mt-20 bg-white pb-28 pt-24">
-        <div className="mx-auto max-w-3xl px-10 text-center">
-          <motion.div {...reveal}>
-            <p className="font-script text-3xl text-[#B08A4F]">the wedding party</p>
-            <img src={entourageTitleImg} alt="The Entourage" className="mx-auto mt-2 h-16 w-auto object-contain" />
-          </motion.div>
-
-          <div className="mt-14">
-            {entourage.map((group, i) => (
-              <motion.div key={group.category} {...reveal}>
-                {i > 0 && (
-                  <div className="my-12 flex items-center justify-center gap-3" aria-hidden>
-                    <span className="h-px w-16 bg-[#B08A4F]/40" />
-                    <span className="h-1.5 w-1.5 rotate-45 bg-[#B08A4F]/70" />
-                    <span className="h-px w-16 bg-[#B08A4F]/40" />
-                  </div>
-                )}
-                <h3 className="font-['Oswald'] text-sm font-light uppercase tracking-[0.45em] text-[#B08A4F]">
-                  {group.category.split('(')[0].trim()}
-                </h3>
-                <div
-                  className={`mx-auto mt-5 grid gap-y-2 ${
-                    group.members.length > 3 ? 'max-w-2xl grid-cols-2 gap-x-14' : 'grid-cols-1'
-                  }`}
-                >
-                  {group.members.map((m) => (
-                    <p key={`${m.role}-${m.name}`} className="font-serif text-2xl leading-snug text-[#102F27]">
-                      {m.name}
-                    </p>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <DesktopPhotoBand photo={0} groomName={groomName} brideName={brideName} />
 
       {/* ================= TIMELINE ================= */}
-      <section id="section-timeline" className="scroll-mt-20 bg-[#F2EBDD] pb-28 pt-20">
+      <section id="section-timeline" className="scroll-mt-20 bg-white pb-28 pt-20">
         <div className="mx-auto max-w-5xl px-10 text-[#102F27]">
           {/* Same design as the mobile Timeline page: hand-lettered title, couple line, center rail with line icons */}
           <motion.div {...reveal} className="text-center">
@@ -397,6 +374,66 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
         </div>
       </section>
 
+      <DesktopPhotoBand photo={1} groomName={groomName} brideName={brideName} />
+
+      {/* ================= ENTOURAGE (wedding-program style) ================= */}
+      <section id="section-entourage" className="scroll-mt-20 bg-white pb-28 pt-24">
+        <div className="mx-auto max-w-3xl px-10 text-center">
+          <motion.div {...reveal}>
+            <img src={entourageTitleImg} alt="The Entourage" className="mx-auto h-16 w-auto object-contain" />
+          </motion.div>
+
+          <div className="mt-14">
+            {entourage.map((group, i) => (
+              <motion.div key={group.category} {...reveal}>
+                {i > 0 && (
+                  <div className="my-12 flex items-center justify-center gap-3" aria-hidden>
+                    <span className="h-px w-16 bg-[#B08A4F]/40" />
+                    <span className="h-1.5 w-1.5 rotate-45 bg-[#B08A4F]/70" />
+                    <span className="h-px w-16 bg-[#B08A4F]/40" />
+                  </div>
+                )}
+                <h3 className="font-['Oswald'] text-sm font-light uppercase tracking-[0.45em] text-[#B08A4F]">
+                  {group.category.split('(')[0].trim()}
+                </h3>
+                <div
+                  className={`mx-auto mt-5 grid gap-y-2 ${
+                    group.members.length > 3 ? 'max-w-2xl grid-cols-2 gap-x-14' : 'grid-cols-1'
+                  }`}
+                >
+                  {group.members.map((m) => (
+                    <p key={`${m.role}-${m.name}`} className="font-serif text-2xl leading-snug text-[#102F27]">
+                      {m.name}
+                    </p>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <DesktopPhotoBand photo={2} groomName={groomName} brideName={brideName} />
+
+      {/* ================= FAQS (same as the phone page: forest band with gold diagonals, ivory card) ================= */}
+      <section id="section-faqs" className="scroll-mt-20 relative bg-[#F2EBDD] pb-28">
+        <div aria-hidden className="absolute inset-x-0 top-0 h-80 overflow-hidden bg-[#102F27]">
+          <span className="absolute right-[30%] -top-10 h-[150%] w-[2px] origin-top rotate-[32deg] bg-gradient-to-b from-[#B08A4F] via-[#B08A4F]/70 to-transparent" />
+          <span className="absolute right-[22%] -top-10 h-[150%] w-px origin-top rotate-[32deg] bg-gradient-to-b from-[#E6D3AE]/80 via-[#E6D3AE]/40 to-transparent" />
+        </div>
+        <div className="relative mx-auto max-w-3xl px-10 pt-24">
+          <motion.div {...reveal} className="rounded-[2rem] bg-[#FBF8F1] px-12 pb-6 pt-11 shadow-[0_30px_60px_-30px_rgba(16,47,39,0.45)]">
+            <h2 className="flex items-center gap-3">
+              <Plus className="h-8 w-8 text-[#B08A4F]" strokeWidth={2.25} aria-hidden />
+              <span className="font-serif text-5xl font-semibold leading-none text-[#102F27]">FAQs</span>
+            </h2>
+            <p className="mt-3 text-[15px] leading-relaxed text-[#102F27]/60">A few answers to help you plan for our day.</p>
+            <FaqAccordion />
+          </motion.div>
+          <p className="mt-9 text-center text-sm text-[#102F27]/60">Still have questions? Message us anytime, we&rsquo;re happy to help.</p>
+        </div>
+      </section>
+
       {/* ================= RSVP (photo band) ================= */}
       <section id="section-rsvp" className="scroll-mt-20 relative overflow-hidden py-36">
         <img src={tablescapeImg} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -415,7 +452,7 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
           </motion.div>
           <motion.div {...reveal} className="bg-white p-10 shadow-2xl">
             <p className="mb-6 text-center font-['Oswald'] text-lg font-light uppercase tracking-[0.45em] text-[#102F27]">RSVP</p>
-            <RsvpForm />
+            <RsvpForm key={formKey} onDone={() => setShowThanks(true)} />
           </motion.div>
         </div>
         <Diagonal edge="bottom" fill="#102F27" />
@@ -442,6 +479,18 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
           Back to top
         </button>
       </footer>
+
+      {showThanks && (
+        <div className="fixed inset-0 z-[70] overflow-y-auto">
+          <ThanksPage
+            onRestart={restart}
+            groomName={groomName}
+            brideName={brideName}
+            displayDate={displayDate}
+            autoReturn
+          />
+        </div>
+      )}
     </div>
   );
 };
