@@ -10,7 +10,7 @@ import meadowCoupleImg from '../assets/images/wedding_couple_meadow_179160291453
 import tablescapeImg from '../assets/images/wedding_tablescape_candlelight_single.jpg';
 import entourageTitleImg from '../assets/images/the_entourage_title.svg';
 import weddingTimelineTitleImg from '../assets/images/wedding_timeline_emerald.svg';
-import weddingAttireTitleImg from '../assets/images/wedding_attire_forest.svg';
+import weddingAttireTitleImg from '../assets/images/wedding_attire_hd_forest.png';
 
 
 // Desktop (lg+) website version of the invitation: one long, sectioned page.

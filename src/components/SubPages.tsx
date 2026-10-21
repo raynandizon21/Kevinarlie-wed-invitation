@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { ChevronLeft, ChevronDown, Navigation, Plus, X } from 'lucide-react';
+import { Check, ChevronLeft, ChevronDown, Navigation, Plus, X } from 'lucide-react';
 import { EntourageCategory, TimelineItem } from '../types/wedding';
 import { getRsvpSourceForSubmit } from '../rsvpSource';
 import { FAQS_DATA } from '../data/weddingData';
@@ -11,8 +11,8 @@ import tablescapeImg from '../assets/images/wedding_tablescape_candlelight_singl
 import entourageTitleImg from '../assets/images/the_entourage_title_ivory.svg';
 import weddingTimelineTitleImg from '../assets/images/wedding_timeline_emerald.svg';
 import meadowCoupleImg from '../assets/images/wedding_couple_meadow_1791602914531.jpg';
-// Traced from wedding-attire.png (4x upscale + potrace), forest color, so it stays sharp at any size
-import weddingAttireTitleImg from '../assets/images/wedding_attire_forest.svg';
+// From WEDDING-ATTIRE-HD.png: recolored to forest on a transparent background (2051px wide, sharp on any phone)
+import weddingAttireTitleImg from '../assets/images/wedding_attire_hd_forest.png';
 
 // Mobile story pages: each has its own look (photo cover, emerald, forest, arch photo, photo backdrop)
 // so the pages don't feel the same. Shared pieces below.
@@ -29,7 +29,7 @@ const pageX = 'px-[clamp(1rem,5vw,1.5rem)]';
 const belowBack = 'pt-[max(4.5rem,calc(env(safe-area-inset-top,0px)+3.5rem))]';
 
 // Plain Back link (no chip) that stays at the top-left while the page scrolls
-const BackChip: React.FC<{ onBack: () => void; light?: boolean }> = ({ onBack, light = false }) => (
+export const BackChip: React.FC<{ onBack: () => void; light?: boolean }> = ({ onBack, light = false }) => (
   <div className="sticky top-0 z-20 h-0">
     <button
       type="button"
@@ -290,14 +290,15 @@ export const TimelinePage: React.FC<{
     transition={{ duration: 0.6, ease: 'easeInOut' }}
     className="relative isolate flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F2EBDD] text-[#102F27] pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]"
   >
-    {/* Faint couple photo behind the top part of the page; it fades out around the 6:00 PM row,
+    {/* Faint couple photo behind the top part of the page. It fades in from ivory at the very top (the
+        phone status bar is ivory, so there's no hard edge there) and fades out around the 6:00 PM row,
         leaving the rest of the timeline on plain ivory */}
     <img
       src={meadowCoupleImg}
       alt=""
       aria-hidden
       draggable={false}
-      className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-[60%_center] opacity-[0.3] grayscale-[30%] [mask-image:linear-gradient(to_bottom,black_40%,transparent_58%)]"
+      className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-[60%_center] opacity-[0.3] grayscale-[30%] [mask-image:linear-gradient(to_bottom,transparent_0%,black_16%,black_40%,transparent_58%)]"
     />
     <button
       type="button"
@@ -440,7 +441,7 @@ const Choice: React.FC<{ name: string; checked: boolean; locked: boolean; onChan
 );
 
 export const RsvpForm: React.FC<{
-  /** Mobile: called 3s after submit (popup shown). Desktop: omitted, thank-you shows inline. */
+  /** Mobile: called 2s after submit (popup shown). Desktop: omitted, thank-you shows inline. */
   onDone?: () => void;
   className?: string;
 }> = ({ onDone, className = '' }) => {
@@ -460,7 +461,7 @@ export const RsvpForm: React.FC<{
 
   useEffect(() => {
     if (!submitted || !onDone) return;
-    const t = window.setTimeout(onDone, 3000);
+    const t = window.setTimeout(onDone, 2000);
     return () => window.clearTimeout(t);
   }, [submitted, onDone]);
 
@@ -656,12 +657,24 @@ export const RsvpForm: React.FC<{
       </form>
 
       {submitted && onDone && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 px-6">
-          <div className="w-full max-w-xs rounded-3xl bg-white px-6 py-8 text-center shadow-xl">
-            <p className="text-xs uppercase tracking-[0.3em] text-[#78947F] mb-2">Thank you</p>
-            <p className="font-serif text-2xl text-[#102F27]">Response sent</p>
-          </div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-30 flex items-center justify-center bg-[#102F27]/60 px-6 backdrop-blur-sm"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: easeOut }}
+            className="w-full max-w-xs rounded-[1.75rem] bg-[#FBF8F1] px-6 pb-7 pt-8 text-center text-[#102F27] shadow-2xl"
+          >
+            <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-[#185844] text-[#F2EBDD]">
+              <Check className="h-6 w-6" strokeWidth={2} />
+            </span>
+            <p className="mt-4 font-['Parisienne'] text-[2.4rem] leading-none">Thank you!</p>
+            <p className="mt-2 font-['Oswald'] text-[11px] font-light uppercase tracking-[0.35em] pl-[0.35em] text-[#B08A4F]">Response sent</p>
+          </motion.div>
+        </motion.div>
       )}
     </>
   );
@@ -670,8 +683,10 @@ export const RsvpForm: React.FC<{
 // --- RSVP: candlelit photo backdrop with the form on an ivory card ---
 export const RsvpPage: React.FC<{
   onBack: () => void;
+  /** Called 2s after a successful submit (the gallery comes next) */
+  onDone: () => void;
   rsvpDeadline: string;
-}> = ({ onBack, rsvpDeadline }) => (
+}> = ({ onBack, onDone, rsvpDeadline }) => (
   <div className="relative min-h-[100dvh] overflow-hidden text-white">
     <img src={tablescapeImg} alt="" className="absolute inset-0 h-full w-full object-cover" />
     <div className="absolute inset-0 bg-[#102F27]/75" />
@@ -691,7 +706,7 @@ export const RsvpPage: React.FC<{
           by {rsvpDeadline}
         </p>
       </motion.div>
-      <RsvpForm onDone={onBack} className="mx-auto mt-7 max-w-md rounded-[1.75rem] bg-[#F2EBDD] p-[clamp(1.1rem,5vw,1.5rem)] text-[#102F27] shadow-2xl" />
+      <RsvpForm onDone={onDone} className="mx-auto mt-7 max-w-md rounded-[1.75rem] bg-[#F2EBDD] p-[clamp(1.1rem,5vw,1.5rem)] text-[#102F27] shadow-2xl" />
     </div>
   </div>
 );

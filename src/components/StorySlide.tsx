@@ -98,13 +98,14 @@ export const StorySlide: React.FC<{
   /** Shows the Next cue after the content (pages that fit one screen draw their own) */
   nextLabel?: string;
   /** Page color behind the content and the cue */
-  tone?: 'ivory' | 'forest' | 'emerald';
+  tone?: 'ivory' | 'sage' | 'forest' | 'emerald';
   children: React.ReactNode;
 }> = ({ motion: m, onNext, onPrev, nextLabel, tone = 'ivory', children }) => {
   const ref = useRef<HTMLDivElement>(null);
   const touch = useRef<{ x: number; y: number; atTop: boolean; atBottom: boolean } | null>(null);
   const dark = tone !== 'ivory';
-  const toneBg = tone === 'emerald' ? 'bg-[#185844]' : tone === 'forest' ? 'bg-[#102F27]' : 'bg-[#F2EBDD]';
+  const toneBg =
+    tone === 'emerald' ? 'bg-[#185844]' : tone === 'forest' ? 'bg-[#102F27]' : tone === 'sage' ? 'bg-[#78947F]' : 'bg-[#F2EBDD]';
 
   return (
     <motion.div

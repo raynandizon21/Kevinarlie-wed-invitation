@@ -9,9 +9,10 @@ import { DetailsPage, TimelinePage, EntouragePage, RsvpPage, FaqPage } from './c
 import { EditDetailsModal } from './components/EditDetailsModal';
 import { DesktopSite } from './components/DesktopSite';
 import { MobileHero } from './components/MobileHero';
+import { PhotoPage, STORY_PHOTOS, ThanksPage } from './components/GalleryPages';
 import { NextCue, StoryKind, StoryMotion, StorySlide, storyTransition, storyVariants } from './components/StorySlide';
 
-export type AppView = 'sobre' | 'hub' | 'rsvp' | 'details' | 'timeline' | 'faqs' | 'entourage';
+export type AppView = 'sobre' | 'hub' | 'rsvp' | 'details' | 'timeline' | 'faqs' | 'entourage' | 'photo1' | 'photo2' | 'photo3' | 'thanks';
 
 // Reads an old-style hash link (e.g. #details) into a view; only used once on load
 const parseHash = (): AppView | null => {
@@ -24,21 +25,32 @@ const parseHash = (): AppView | null => {
 };
 
 // Mobile story order after the hero ('hub'); swipe up / Next moves along it
-const STORY: AppView[] = ['hub', 'details', 'timeline', 'entourage', 'faqs', 'rsvp'];
+// A full-screen photo after Details, Timeline and Entourage; the closing thank-you comes after the RSVP
+const STORY: AppView[] = ['hub', 'details', 'photo1', 'timeline', 'photo2', 'entourage', 'photo3', 'faqs', 'rsvp', 'thanks'];
+const PHOTO_VIEWS: AppView[] = ['photo1', 'photo2', 'photo3'];
+const isPhotoView = (view: AppView) => PHOTO_VIEWS.includes(view);
 const STORY_LABEL: Partial<Record<AppView, string>> = {
   details: 'Details',
   timeline: 'Timeline',
   entourage: 'Entourage',
   faqs: 'FAQs',
   rsvp: 'RSVP',
+  thanks: 'Thank you',
+  photo1: 'Our story',
+  photo2: 'Our story',
+  photo3: 'Our story',
 };
 // Transition into each page (played backwards when going back), so every step feels different
 const STORY_KIND: Partial<Record<AppView, StoryKind>> = {
   details: 'rise', // the hero lifts away like a curtain
-  timeline: 'push', // page turn from the right
-  entourage: 'zoom', // soft zoom into the forest page
-  faqs: 'circle', // grows from the Next cue at the bottom
+  photo1: 'zoom', // each photo fades in with a soft zoom
+  photo2: 'zoom',
+  photo3: 'zoom',
+  timeline: 'wipe', // ivory page wipes up over the photo
+  entourage: 'push', // page turn from the right
+  faqs: 'circle', // grows from the bottom
   rsvp: 'wipe', // the candlelit backdrop wipes up over the page
+  thanks: 'rise',
 };
 const storyIndex = (view: AppView) => STORY.indexOf(view);
 // Top color of each story page. Phone browsers (iPhone Safari) tint the status bar and toolbar from the
@@ -50,6 +62,10 @@ const STORY_BAR_COLOR: Partial<Record<AppView, string>> = {
   entourage: '#102F27',
   faqs: '#F2EBDD',
   rsvp: '#102F27',
+  photo1: '#F2EBDD',
+  photo2: '#78947F',
+  photo3: '#102F27',
+  thanks: '#F2EBDD',
 };
 
 // The URL stays clean (no #...): the current view lives in history.state so Back/Forward still work
@@ -157,6 +173,26 @@ export default function App() {
   const storyPrev = useCallback(() => stepStory(-1), [stepStory]);
   const nextLabel = STORY_LABEL[STORY[storyIndex(activeView) + 1]];
 
+  // Jump to any story page (closing "Back to the beginning")
+  const jumpTo = useCallback((view: AppView) => {
+    moveStory(activeViewRef.current, view);
+    goTo(view);
+    setActiveView(view);
+  }, []);
+  // Right after an RSVP the closing note shows, then returns to the hero on its own
+  const [afterRsvp, setAfterRsvp] = useState(false);
+  const handleRsvpDone = useCallback(() => {
+    setAfterRsvp(true);
+    jumpTo('thanks');
+  }, [jumpTo]);
+  useEffect(() => {
+    if (activeView !== 'thanks') setAfterRsvp(false);
+  }, [activeView]);
+  const restartStory = useCallback(() => {
+    setAfterRsvp(false);
+    jumpTo('hub');
+  }, [jumpTo]);
+
   // Music toggle
   const handleToggleMusic = () => {
     const playing = melodyPlayer.toggle();
@@ -252,7 +288,7 @@ export default function App() {
           ========================================================================= */}
       {showDesktopSite && (
         <DesktopSite
-          section={activeView === 'hub' || activeView === 'faqs' ? 'top' : (activeView as 'details' | 'timeline' | 'entourage' | 'rsvp')}
+          section={activeView === 'hub' || activeView === 'faqs' || isPhotoView(activeView) || activeView === 'thanks' ? 'top' : (activeView as 'details' | 'timeline' | 'entourage' | 'rsvp')}
           groomName={weddingData.groomNickname || weddingData.groom.split(' ')[0]}
           brideName={weddingData.brideNickname || weddingData.bride.split(' ')[0]}
           displayDate={weddingData.displayDate}
@@ -326,14 +362,46 @@ export default function App() {
               <EntouragePage onBack={storyPrev} categories={ENTOURAGE_DATA} />
             </StorySlide>
           )}
+          {isPhotoView(activeView) && (
+            // One full-screen photo between pages; it draws its own Next cue
+            <StorySlide
+              key={activeView}
+              motion={storyMotion}
+              onNext={storyNext}
+              onPrev={storyPrev}
+              tone={STORY_PHOTOS[PHOTO_VIEWS.indexOf(activeView)]?.layout ?? 'forest'}
+            >
+              <PhotoPage
+                photo={PHOTO_VIEWS.indexOf(activeView)}
+                onBack={storyPrev}
+                onNext={storyNext}
+                nextLabel={nextLabel}
+                groomName={weddingData.groomNickname || weddingData.groom.split(' ')[0]}
+                brideName={weddingData.brideNickname || weddingData.bride.split(' ')[0]}
+              />
+            </StorySlide>
+          )}
           {activeView === 'faqs' && (
             <StorySlide key="faqs" motion={storyMotion} onNext={storyNext} onPrev={storyPrev} nextLabel={nextLabel}>
               <FaqPage onBack={storyPrev} />
             </StorySlide>
           )}
           {activeView === 'rsvp' && (
-            <StorySlide key="rsvp" motion={storyMotion} onPrev={storyPrev}>
-              <RsvpPage onBack={storyPrev} rsvpDeadline={weddingData.rsvpDeadline} />
+            // No Next here: the thank-you page only opens after a submit
+            <StorySlide key="rsvp" motion={storyMotion} onPrev={storyPrev} tone="forest">
+              <RsvpPage onBack={storyPrev} onDone={handleRsvpDone} rsvpDeadline={weddingData.rsvpDeadline} />
+            </StorySlide>
+          )}
+          {activeView === 'thanks' && (
+            // Shown once after a submit; the only way on is "Back to the beginning"
+            <StorySlide key="thanks" motion={storyMotion}>
+              <ThanksPage
+                onRestart={restartStory}
+                groomName={weddingData.groomNickname || weddingData.groom.split(' ')[0]}
+                brideName={weddingData.brideNickname || weddingData.bride.split(' ')[0]}
+                displayDate={weddingData.displayDate}
+                autoReturn={afterRsvp}
+              />
             </StorySlide>
           )}
         </AnimatePresence>
