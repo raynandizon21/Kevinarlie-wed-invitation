@@ -180,19 +180,9 @@ export const FAQS_DATA: FaqItem[] = [
   },
   {
     question: 'Can I bring a plus-one?',
-    answer: 'Due to our seating arrangement and venue capacity, the invitation is limited to the number of seats stated on your RSVP.',
-  },
-  {
-    question: 'Are kids allowed?',
-    answer: 'We want an intimate celebration where parents can relax, so only children who are part of the entourage are invited.',
-  },
-  {
-    question: 'Is there free parking at Jardin de Josefina?',
-    answer: 'Yes, there is a spacious and secure parking area at the venue for all guests.',
-  },
-  {
-    question: 'What time should I arrive?',
-    answer: 'Please arrive between 1:45 PM and 2:00 PM so you can be seated before the ceremony begins at 2:30 PM.',
+    // Line breaks are kept on the FAQ page, so the steps show one per line
+    answer:
+      'Yes, you can! To add your plus-one in the RSVP:\n1. Choose “Accepts with pleasure”.\n2. Under “Will you bring any guests?”, tap “Yes”.\n3. Type your guest’s full name.\n4. Bringing more than one? Tap “Add another guest” for each person (one name per field).',
   },
   {
     question: 'What is the "Unplugged Ceremony" policy?',

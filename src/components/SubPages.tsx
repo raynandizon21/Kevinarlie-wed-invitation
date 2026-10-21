@@ -765,7 +765,7 @@ const FaqNumbered: React.FC = () => {
               <span className="w-7 shrink-0 font-serif text-[1.6rem] italic leading-none text-[#B08A4F] tabular-nums">
                 {String(index + 1).padStart(2, '0')}
               </span>
-              <span className="flex-1 font-serif text-[1.08rem] font-medium leading-snug text-[#102F27]">{item.question}</span>
+              <span className="flex-1 font-serif text-[1.25rem] font-semibold leading-snug text-[#102F27]">{item.question}</span>
               <span
                 aria-hidden
                 className={`relative grid h-7 w-7 shrink-0 place-items-center rounded-full border transition-colors duration-300 ${
@@ -785,7 +785,7 @@ const FaqNumbered: React.FC = () => {
               className="overflow-hidden"
             >
               <div className="ml-[3.6rem] mr-5 border-t border-[#B08A4F]/25 pb-5 pt-3.5">
-                <p className="font-serif text-[15px] leading-relaxed text-[#102F27]/75">{item.answer}</p>
+                <p className="whitespace-pre-line text-[15px] leading-[1.7] text-[#102F27]/85">{item.answer}</p>
               </div>
             </motion.div>
           </motion.li>
@@ -805,7 +805,7 @@ export const FaqPage: React.FC<{ onBack: () => void }> = ({ onBack }) => (
       className={`${pageX} pt-[max(6rem,calc(env(safe-area-inset-top,0px)+5rem))] text-center`}
     >
       <StoryHeading eyebrow="good to know">FAQs</StoryHeading>
-      <p className="mx-auto mt-5 max-w-[18rem] font-serif text-[15px] italic leading-relaxed text-[#102F27]/70">
+      <p className="mx-auto mt-5 max-w-[18rem] font-serif text-[17px] italic leading-relaxed text-[#102F27]/80">
         A few answers to help you plan for our day.
       </p>
     </motion.div>
