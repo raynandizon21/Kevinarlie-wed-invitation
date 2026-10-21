@@ -410,6 +410,8 @@ export default function AdminApp() {
     }
   };
 
+  // Pop-up backdrops are a plain tint, no backdrop-blur: blurring the whole page behind the archive table
+  // made every hover/scroll repaint the blur, so it flickered and lagged
   // Esc closes the open pop-up first, then the archive panel
   useEffect(() => {
     if (!pendingDelete && !archiveOpen && !editDraft) return;
@@ -690,7 +692,7 @@ export default function AdminApp() {
       <AnimatePresence>
         {archiveOpen && (
           <motion.div
-            className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-[#102F27]/50 p-0 sm:p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-[#102F27]/65 p-0 sm:p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -701,7 +703,7 @@ export default function AdminApp() {
               role="dialog"
               aria-modal="true"
               aria-labelledby="archive-title"
-              className="flex h-[100dvh] w-full max-w-5xl flex-col overflow-hidden sm:h-[85dvh] sm:rounded-3xl bg-[#F2EBDD] shadow-2xl"
+              className="flex h-[100dvh] w-full max-w-5xl transform-gpu flex-col overflow-hidden sm:h-[85dvh] sm:rounded-3xl bg-[#F2EBDD] shadow-2xl"
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 24 }}
@@ -825,7 +827,7 @@ export default function AdminApp() {
       <AnimatePresence>
         {editDraft && (
           <motion.div
-            className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-[#102F27]/50 p-0 sm:p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-[#102F27]/65 p-0 sm:p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -977,7 +979,7 @@ export default function AdminApp() {
       <AnimatePresence>
         {pendingDelete && (
           <motion.div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-[#102F27]/50 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-[#102F27]/65 p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

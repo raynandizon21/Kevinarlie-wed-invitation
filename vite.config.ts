@@ -3,9 +3,19 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, loadEnv, type Plugin} from 'vite';
 
-// Serve the RSVP admin panel at a clean /admin URL (the file itself is admin.html)
+// Serve the RSVP admin panel at a clean /admin URL (the file itself is admin.html).
+// Opening /admin.html directly redirects to /admin so the address bar never shows ".html".
 function adminCleanUrl(): Plugin {
-  const rewrite = (req: { url?: string }, _res: unknown, next: () => void) => {
+  const rewrite = (
+    req: { url?: string },
+    res: { statusCode: number; setHeader: (k: string, v: string) => void; end: () => void },
+    next: () => void
+  ) => {
+    if (req.url === '/admin.html' || req.url?.startsWith('/admin.html?')) {
+      res.statusCode = 302;
+      res.setHeader('Location', req.url.replace(/^\/admin\.html/, '/admin'));
+      return res.end();
+    }
     if (req.url === '/admin' || req.url === '/admin/' || req.url?.startsWith('/admin?')) {
       req.url = req.url.replace(/^\/admin\/?/, '/admin.html');
     }
