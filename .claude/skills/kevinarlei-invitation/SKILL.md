@@ -24,8 +24,12 @@ The person working on this writes in Taglish; reply the same way.
 
 1. **Envelope** (`EnvelopeHero.tsx`) — every visit starts here. Old `#details`-style links are read once on load and
    opened right after the envelope.
-2. **Phone** (`< 1024px`): **MobileHero** (tap / swipe up) → **cards menu** (`InvitationMenuHub.tsx`) →
-   sub-pages in `SubPages.tsx` (Details, Entourage, Timeline, RSVP, FAQs). Cards only mount after the hero is dismissed.
+2. **Phone** (`< 1024px`): a full-screen **story** in `App.tsx`: MobileHero → Details → Timeline → Entourage → FAQs → RSVP
+   (order in `STORY`). Each page is a `StorySlide` (`StorySlide.tsx`) with its own scroll; swipe up at the bottom or tap
+   "Next ·" (or swipe left/right) to move. No cards menu anymore.
+   Each step has its own transition (`STORY_KIND` in `App.tsx`, variants in `StorySlide.tsx`: rise, push, zoom,
+   circle, wipe) and each page its own look: Details = ivory, each venue a tilted polaroid beside its details (sides alternate), small dress-code section, Timeline = ivory,
+   Entourage = forest page, FAQs = text-only header + numbered questions, RSVP = candlelit photo backdrop. Keep them different from each other.
 3. **Desktop** (`>= 1024px`): one long website, `DesktopSite.tsx` (nav: Details, Entourage | K&A | Timeline, RSVP).
 - URLs stay clean (no `#`): the current view lives in `history.state` (`goTo()` in `App.tsx`), so Back/Forward work.
 - `?view=rsvp` is the principal-sponsor link: skips the envelope and submits with `source = 'qr'`.
@@ -42,7 +46,7 @@ The person working on this writes in Taglish; reply the same way.
 | RSVP API | `src/server/index.ts`, DB pool in `src/server/db.ts` |
 | Schema | `database/rsvp_schema.sql` |
 
-`CardsHub`, `WeddingDetailsHub`, `RsvpSection`, `EventTimeline`, `FaqSection`, `ColorPaletteSection`, `VenuesSection`,
+`InvitationMenuHub`, `CardsHub`, `WeddingDetailsHub`, `RsvpSection`, `EventTimeline`, `FaqSection`, `ColorPaletteSection`, `VenuesSection`,
 `EntourageSection`, `WeddingCountdown`, `DetailsHero`, `TopNavigation` are **unused leftovers** — don't edit them
 expecting a visible change.
 

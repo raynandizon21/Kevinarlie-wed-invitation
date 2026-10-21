@@ -112,6 +112,9 @@ export const EnvelopeHero: React.FC<EnvelopeHeroProps> = ({
               src={realisticEnvelopeImg}
               alt="Realistic Dark Green Wedding Envelope"
               className="w-full h-full object-contain select-none pointer-events-none block filter drop-shadow-md transition-transform duration-300 group-hover:scale-[1.012]"
+              // The PNG has light/beige edges baked around the envelope (top 3px, left ~2px, right ~11px,
+              // bottom 31px of 710x554); trim them so only the green paper shows, with the soft CSS shadow below
+              style={{ clipPath: 'inset(0.8% 1.7% 5.7% 0.6%)' }}
               referrerPolicy="no-referrer"
             />
 

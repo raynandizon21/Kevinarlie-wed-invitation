@@ -3,11 +3,14 @@ import { motion } from 'motion/react';
 import { Navigation } from 'lucide-react';
 import { EntourageCategory, TimelineItem } from '../types/wedding';
 import { DRESS_CODE, RsvpForm, TimelineIcon } from './SubPages';
+import { Sprig } from './Sprig';
 import jardinVenueImg from '../assets/images/jardin_venue_1791676573787.jpg';
 import meadowCoupleImg from '../assets/images/wedding_couple_meadow_1791602914531.jpg';
-import tablescapeImg from '../assets/images/wedding_tablescape_candlelight_1791602927298.jpg';
+// Left half of the original two-photo image, so there's no seam line down the middle
+import tablescapeImg from '../assets/images/wedding_tablescape_candlelight_single.jpg';
 import entourageTitleImg from '../assets/images/the_entourage_title.svg';
 import weddingTimelineTitleImg from '../assets/images/wedding_timeline_emerald.svg';
+import weddingAttireTitleImg from '../assets/images/wedding_attire_forest.svg';
 
 
 // Desktop (lg+) website version of the invitation: one long, sectioned page.
@@ -29,17 +32,7 @@ const NAV_RIGHT: Array<{ id: DesktopSection; label: string }> = [
   { id: 'rsvp', label: 'RSVP' },
 ];
 
-// Small botanical sprig used around the monogram and under the hero names
-export const Sprig: React.FC<{ className?: string }> = ({ className }) => (
-  <svg viewBox="0 0 80 40" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" className={className} aria-hidden>
-    <path d="M6 30 C 26 22, 46 20, 74 10" />
-    <path d="M20 25 C 18 17, 22 12, 27 10 C 28 16, 25 21, 20 25 Z" />
-    <path d="M32 22 C 34 14, 40 11, 45 11 C 43 17, 38 21, 32 22 Z" />
-    <path d="M28 24 C 30 30, 36 33, 41 33 C 39 28, 34 25, 28 24 Z" />
-    <path d="M46 18 C 49 24, 55 26, 60 25 C 57 20, 52 18, 46 18 Z" />
-    <path d="M52 16 C 54 10, 59 7, 64 7 C 62 12, 58 15, 52 16 Z" />
-  </svg>
-);
+export { Sprig };
 
 const scrollToSection = (id: DesktopSection, smooth = true) => {
   const behavior: ScrollBehavior = smooth ? 'smooth' : 'auto';
@@ -276,28 +269,37 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
         </div>
       </section>
 
-      {/* ================= DRESS CODE (photo band) ================= */}
-      <section className="relative overflow-hidden py-32">
-        <img src={jardinVenueImg} alt="" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-[#102F27]/70" />
-        <Diagonal edge="top" fill="#FFFFFF" />
-        <motion.div {...reveal} className="relative text-center text-white">
-          <p className="font-script text-3xl text-[#E6D3AE]">formal attire</p>
-          <h2 className="mt-2 font-['Oswald'] text-[clamp(2.5rem,4vw,3.5rem)] font-light uppercase tracking-[0.35em]">Dress Code</h2>
-          <Sprig className="mx-auto mt-4 w-16 text-white/80" />
-          <div className="mt-12 flex items-start justify-center gap-16">
-            {DRESS_CODE.map((c) => (
-              <div key={c.name} className="flex flex-col items-center gap-5">
-                <div className="rounded-full border border-white/50 p-2">
-                  <div className="h-20 w-20 rounded-full" style={{ backgroundColor: c.hex }} />
-                </div>
-                <span className="font-['Oswald'] text-xs font-light uppercase tracking-[0.35em]">{c.name}</span>
-              </div>
+      {/* ================= DRESS CODE ("Wedding Attire" card, same as mobile) ================= */}
+      <section className="bg-[#F2EBDD] py-28">
+        <motion.div {...reveal} className="mx-auto max-w-3xl px-10 text-center">
+          <h2>
+            <img
+              src={weddingAttireTitleImg}
+              alt="Wedding Attire"
+              draggable={false}
+              className="mx-auto block h-auto w-[30rem] max-w-full select-none"
+            />
+          </h2>
+          <p className="mx-auto mt-6 max-w-xl font-serif text-xl leading-relaxed text-[#102F27]/80">
+            We would love to see you dressed in formal attire in the colors of our day. Kindly avoid white and ivory.
+          </p>
+          <div className="mx-auto mt-12 grid max-w-2xl grid-cols-4 gap-5">
+            {DRESS_CODE.map((c, i) => (
+              <motion.div
+                key={c.name}
+                {...reveal}
+                transition={{ ...reveal.transition, delay: i * 0.1 }}
+                className="flex min-w-0 flex-col items-center"
+              >
+                <div
+                  className="aspect-[3/4] w-full rounded-t-full shadow-[0_10px_24px_rgba(16,47,39,0.15)]"
+                  style={{ backgroundColor: c.hex }}
+                />
+                <span className="mt-4 font-['Oswald'] text-xs font-light uppercase tracking-[0.3em] text-[#102F27]/70">{c.name}</span>
+              </motion.div>
             ))}
           </div>
-          <p className="mt-10 font-script text-2xl text-white/80">kindly avoid white &amp; ivory</p>
         </motion.div>
-        <Diagonal edge="bottom" fill="#FFFFFF" />
       </section>
 
       {/* ================= ENTOURAGE (wedding-program style) ================= */}

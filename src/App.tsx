@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { AnimatePresence } from 'motion/react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { PALETTES, WEDDING_DETAILS, TIMELINE, ENTOURAGE_DATA } from './data/weddingData';
 import { ColorPalette } from './types/wedding';
-import { initRsvpSource, isRsvpQrLink, markRsvpSourceWeb } from './rsvpSource';
+import { initRsvpSource, isRsvpQrLink } from './rsvpSource';
 import { melodyPlayer } from './utils/audioSynth';
 import { EnvelopeHero } from './components/EnvelopeHero';
-import { InvitationMenuHub, MenuModalView } from './components/InvitationMenuHub';
 import { DetailsPage, TimelinePage, EntouragePage, RsvpPage, FaqPage } from './components/SubPages';
 import { EditDetailsModal } from './components/EditDetailsModal';
 import { DesktopSite } from './components/DesktopSite';
 import { MobileHero } from './components/MobileHero';
+import { NextCue, StoryKind, StoryMotion, StorySlide, storyTransition, storyVariants } from './components/StorySlide';
 
 export type AppView = 'sobre' | 'hub' | 'rsvp' | 'details' | 'timeline' | 'faqs' | 'entourage';
 
@@ -21,6 +21,35 @@ const parseHash = (): AppView | null => {
   if (hash === 'hub' || hash === 'menu') return 'hub';
   if (hash === 'sobre' || hash === '') return 'sobre';
   return null;
+};
+
+// Mobile story order after the hero ('hub'); swipe up / Next moves along it
+const STORY: AppView[] = ['hub', 'details', 'timeline', 'entourage', 'faqs', 'rsvp'];
+const STORY_LABEL: Partial<Record<AppView, string>> = {
+  details: 'Details',
+  timeline: 'Timeline',
+  entourage: 'Entourage',
+  faqs: 'FAQs',
+  rsvp: 'RSVP',
+};
+// Transition into each page (played backwards when going back), so every step feels different
+const STORY_KIND: Partial<Record<AppView, StoryKind>> = {
+  details: 'rise', // the hero lifts away like a curtain
+  timeline: 'push', // page turn from the right
+  entourage: 'zoom', // soft zoom into the forest page
+  faqs: 'circle', // grows from the Next cue at the bottom
+  rsvp: 'wipe', // the candlelit backdrop wipes up over the page
+};
+const storyIndex = (view: AppView) => STORY.indexOf(view);
+// Top color of each story page. Phone browsers (iPhone Safari) tint the status bar and toolbar from the
+// page background, so it is updated on every step; otherwise the forest Entourage tint stays behind.
+const STORY_BAR_COLOR: Partial<Record<AppView, string>> = {
+  hub: '#F2EBDD',
+  details: '#F2EBDD',
+  timeline: '#F2EBDD',
+  entourage: '#102F27',
+  faqs: '#F2EBDD',
+  rsvp: '#102F27',
 };
 
 // The URL stays clean (no #...): the current view lives in history.state so Back/Forward still work
@@ -67,8 +96,17 @@ export default function App() {
   const [guestName, setGuestName] = useState<string>('Our Dear Guest');
   const [isMusicPlaying, setIsMusicPlaying] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  // Mobile: hero intro shown over the cards right after the envelope opens
-  const [showMobileHero, setShowMobileHero] = useState<boolean>(false);
+  // Mobile story transition: direction (+1 forward, -1 back, 0 none) and which effect to play
+  const [storyMotion, setStoryMotion] = useState<StoryMotion>({ dir: 0, kind: 'none' });
+  // The effect belongs to the later page of the two, so going back replays it in reverse
+  const moveStory = (from: AppView, to: AppView) => {
+    const a = storyIndex(from);
+    const b = storyIndex(to);
+    if (a < 0 || b < 0 || a === b) return setStoryMotion({ dir: 0, kind: 'none' });
+    setStoryMotion({ dir: Math.sign(b - a), kind: STORY_KIND[STORY[Math.max(a, b)]] ?? 'rise' });
+  };
+  const activeViewRef = useRef(activeView);
+  activeViewRef.current = activeView;
 
   // Remember whether this visit is a guest (web) or a principal sponsor (QR link)
   useEffect(() => {
@@ -79,17 +117,14 @@ export default function App() {
   useEffect(() => {
     const handlePopState = (e: PopStateEvent) => {
       const view = (e.state as { view?: AppView } | null)?.view;
-      if (view) setActiveView(view);
+      if (!view) return;
+      moveStory(activeViewRef.current, view);
+      setActiveView(view);
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
-
-  // Mobile: start every page at the top (the desktop site scrolls to its own sections)
-  useEffect(() => {
-    if (!isDesktop) window.scrollTo(0, 0);
-  }, [activeView, isDesktop]);
 
   const showDesktopSite = isDesktop && activeView !== 'sobre';
   // "Kevin & Arlei , 12.14.2025" under the timeline title (mobile page and desktop section)
@@ -99,36 +134,28 @@ export default function App() {
     .toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
     .replace(/\//g, '.')}`;
 
-  // 1. Open Envelope -> Redirects to 2nd Image Invitation Menu Hub
+  // 1. Open Envelope -> hero (mobile) / website (desktop), or the page named in the link
   const handleOpenAndRedirectToHub = () => {
     if (!isMusicPlaying) {
       melodyPlayer.start();
       setIsMusicPlaying(true);
     }
+    setStoryMotion({ dir: 0, kind: 'none' });
     goTo(viewAfterEnvelope);
     setActiveView(viewAfterEnvelope);
-    if (viewAfterEnvelope === 'hub') setShowMobileHero(true);
   };
 
-  // 2. Select a specific card from the Menu -> Opens that page
-  const handleSelectView = (view: MenuModalView) => {
-    const targetView: AppView = view === 'palette' || view === 'venues' ? 'details' : view;
-    if (targetView === 'rsvp') markRsvpSourceWeb();
-    goTo(targetView);
-    setActiveView(targetView);
-  };
-
-  // 3. Return to Menu Hub
-  const handleReturnToHub = useCallback(() => {
-    goTo('hub');
-    setActiveView('hub');
+  // 2. Mobile story: step to the next / previous page
+  const stepStory = useCallback((step: 1 | -1) => {
+    const next = STORY[storyIndex(activeViewRef.current) + step];
+    if (!next) return;
+    moveStory(activeViewRef.current, next);
+    goTo(next);
+    setActiveView(next);
   }, []);
-
-  // 4. Return to Envelope
-  const handleReturnToEnvelope = () => {
-    goTo('sobre');
-    setActiveView('sobre');
-  };
+  const storyNext = useCallback(() => stepStory(1), [stepStory]);
+  const storyPrev = useCallback(() => stepStory(-1), [stepStory]);
+  const nextLabel = STORY_LABEL[STORY[storyIndex(activeView) + 1]];
 
   // Music toggle
   const handleToggleMusic = () => {
@@ -156,9 +183,28 @@ export default function App() {
     setGuestName(updated.guestName);
   };
 
-  // Lock body scroll on mobile for envelope and menu hub views
+  // Browser bars follow the current story page (cleared on desktop and the envelope)
   useEffect(() => {
-    if (activeView === 'sobre' || (activeView === 'hub' && !isDesktop)) {
+    const color = !isDesktop ? STORY_BAR_COLOR[activeView] : undefined;
+    document.documentElement.style.backgroundColor = color ?? '';
+    document.body.style.backgroundColor = color ?? '';
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (color) {
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.name = 'theme-color';
+        document.head.appendChild(meta);
+      }
+      meta.content = color;
+    } else {
+      meta?.remove();
+    }
+  }, [activeView, isDesktop]);
+
+  // Lock body scroll for the envelope and the whole mobile story (each story page scrolls by itself)
+  const fixedScreen = activeView === 'sobre' || !isDesktop;
+  useEffect(() => {
+    if (fixedScreen) {
       document.body.style.overflow = 'hidden';
       document.documentElement.style.overflow = 'hidden';
     } else {
@@ -169,13 +215,13 @@ export default function App() {
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
     };
-  }, [activeView, isDesktop]);
+  }, [fixedScreen]);
 
   return (
     <div
       className={
-        activeView === 'sobre' || (activeView === 'hub' && !isDesktop)
-          ? 'fixed inset-0 h-[100dvh] w-full overflow-hidden text-[#102F27] selection:bg-[#78947F]/20 selection:text-[#185844]'
+        fixedScreen
+          ? 'fixed inset-x-0 top-0 h-[100lvh] w-full overflow-hidden text-[#102F27] selection:bg-[#78947F]/20 selection:text-[#185844]'
           : 'min-h-screen text-[#102F27] selection:bg-[#78947F]/20 selection:text-[#185844] transition-colors duration-500 bg-[#F2EBDD]'
       }
       style={{ backgroundColor: activeView === 'sobre' ? undefined : currentPalette.bgTint }}
@@ -224,61 +270,73 @@ export default function App() {
         />
       )}
 
-      <AnimatePresence>
-        {!isDesktop && activeView === 'hub' && showMobileHero && (
-          <MobileHero
-            groomName={weddingData.groomNickname || weddingData.groom.split(' ')[0]}
-            brideName={weddingData.brideNickname || weddingData.bride.split(' ')[0]}
-            onContinue={() => setShowMobileHero(false)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Cards mount once the hero is dismissed, so their entrance plays as the hero slides away */}
-      {!isDesktop && activeView === 'hub' && !showMobileHero && (
-        <InvitationMenuHub
-          palette={currentPalette}
-          groom={weddingData.groom}
-          bride={weddingData.bride}
-          groomNickname={weddingData.groomNickname}
-          brideNickname={weddingData.brideNickname}
-          displayDate={weddingData.displayDate}
-          churchName={weddingData.churchName}
-          receptionName={weddingData.receptionName}
-          rsvpDeadline={weddingData.rsvpDeadline}
-          onOpenView={handleSelectView}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-        />
-      )}
-
       {/* =========================================================================
-          SUB-PAGES (template from wedding-invitation: sticky Back + centered column)
+          MOBILE STORY: hero, then one full-screen page after another
+          (Details -> Timeline -> Entourage -> FAQs -> RSVP), each step with its own transition
           ========================================================================= */}
       {!isDesktop && (
-        <>
-        {activeView === 'details' && (
-          <DetailsPage
-            onBack={handleReturnToHub}
-            ceremonyTime={weddingData.ceremonyTime}
-            churchName={weddingData.churchName}
-            churchAddress={weddingData.churchAddress}
-            receptionName={weddingData.receptionName}
-            receptionAddress={weddingData.receptionAddress}
-            mapsChurchUrl={weddingData.mapsChurchUrl}
-            mapsReceptionUrl={weddingData.mapsReceptionUrl}
-          />
-        )}
-        {activeView === 'timeline' && <TimelinePage
-            onBack={handleReturnToHub}
-            timeline={TIMELINE}
-            coupleLine={timelineCoupleLine}
-          />}
-        {activeView === 'entourage' && <EntouragePage onBack={handleReturnToHub} categories={ENTOURAGE_DATA} />}
-        {activeView === 'rsvp' && (
-          <RsvpPage onBack={handleReturnToHub} rsvpDeadline={weddingData.rsvpDeadline} />
-        )}
-        {activeView === 'faqs' && <FaqPage onBack={handleReturnToHub} />}
-        </>
+        <AnimatePresence initial={false} custom={storyMotion}>
+          {activeView === 'hub' && (
+            <motion.div
+              key="hub"
+              custom={storyMotion}
+              variants={storyVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={storyTransition}
+              className="fixed inset-x-0 top-0 h-[100lvh]"
+            >
+              <MobileHero
+                groomName={weddingData.groomNickname || weddingData.groom.split(' ')[0]}
+                brideName={weddingData.brideNickname || weddingData.bride.split(' ')[0]}
+                displayDate={weddingData.displayDate}
+                time={weddingData.ceremonyTime}
+                onContinue={storyNext}
+              />
+            </motion.div>
+          )}
+          {activeView === 'details' && (
+            <StorySlide key="details" motion={storyMotion} onNext={storyNext} onPrev={storyPrev} nextLabel={nextLabel}>
+              <DetailsPage
+                onBack={storyPrev}
+                ceremonyTime={weddingData.ceremonyTime}
+                churchName={weddingData.churchName}
+                churchAddress={weddingData.churchAddress}
+                receptionName={weddingData.receptionName}
+                receptionAddress={weddingData.receptionAddress}
+                mapsChurchUrl={weddingData.mapsChurchUrl}
+                mapsReceptionUrl={weddingData.mapsReceptionUrl}
+              />
+            </StorySlide>
+          )}
+          {activeView === 'timeline' && (
+            // The timeline fits one screen, so its Next cue sits inside the page
+            <StorySlide key="timeline" motion={storyMotion} onNext={storyNext} onPrev={storyPrev}>
+              <TimelinePage
+                onBack={storyPrev}
+                timeline={TIMELINE}
+                coupleLine={timelineCoupleLine}
+                footer={nextLabel && <NextCue label={nextLabel} onNext={storyNext} className="mt-[1.5dvh]" />}
+              />
+            </StorySlide>
+          )}
+          {activeView === 'entourage' && (
+            <StorySlide key="entourage" motion={storyMotion} onNext={storyNext} onPrev={storyPrev} nextLabel={nextLabel} tone="forest">
+              <EntouragePage onBack={storyPrev} categories={ENTOURAGE_DATA} />
+            </StorySlide>
+          )}
+          {activeView === 'faqs' && (
+            <StorySlide key="faqs" motion={storyMotion} onNext={storyNext} onPrev={storyPrev} nextLabel={nextLabel}>
+              <FaqPage onBack={storyPrev} />
+            </StorySlide>
+          )}
+          {activeView === 'rsvp' && (
+            <StorySlide key="rsvp" motion={storyMotion} onPrev={storyPrev}>
+              <RsvpPage onBack={storyPrev} rsvpDeadline={weddingData.rsvpDeadline} />
+            </StorySlide>
+          )}
+        </AnimatePresence>
       )}
 
       {/* Edit Details Modal */}

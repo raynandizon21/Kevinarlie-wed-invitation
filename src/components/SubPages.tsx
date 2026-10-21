@@ -5,56 +5,62 @@ import { ChevronLeft, ChevronDown, Navigation, Plus, X } from 'lucide-react';
 import { EntourageCategory, TimelineItem } from '../types/wedding';
 import { getRsvpSourceForSubmit } from '../rsvpSource';
 import { FAQS_DATA } from '../data/weddingData';
+import { Sprig } from './Sprig';
 import jardinVenueImg from '../assets/images/jardin_venue_1791676573787.jpg';
-import tablescapeImg from '../assets/images/wedding_tablescape_candlelight_1791602927298.jpg';
-import entourageTitleImg from '../assets/images/the_entourage_title.svg';
+// Left half of the original two-photo image, so there's no seam line down the middle
+import tablescapeImg from '../assets/images/wedding_tablescape_candlelight_single.jpg';
+import entourageTitleImg from '../assets/images/the_entourage_title_ivory.svg';
 import weddingTimelineTitleImg from '../assets/images/wedding_timeline_emerald.svg';
+import meadowCoupleImg from '../assets/images/wedding_couple_meadow_1791602914531.jpg';
+// Traced from wedding-attire.png (4x upscale + potrace), forest color, so it stays sharp at any size
+import weddingAttireTitleImg from '../assets/images/wedding_attire_forest.svg';
 
-// Page layout copied from the wedding-invitation templates (sticky Back + centered column),
-// widened on desktop so it fits both mobile and large screens.
-const PageShell: React.FC<{ onBack: () => void; wide?: boolean; dark?: boolean; children: React.ReactNode }> = ({
-  onBack,
-  wide = false,
-  dark = false,
-  children,
-}) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    transition={{ duration: 0.5, ease: 'easeInOut' }}
-    className={`min-h-[100dvh] w-full overflow-x-hidden ${
-      dark
-        ? 'bg-[#185844] text-[#F2EBDD]'
-        : 'bg-[#F2EBDD] text-[#102F27]'
-    }`}
-  >
-    <div className={`sticky top-0 z-20 backdrop-blur-sm ${dark ? 'bg-[#185844]/95' : 'bg-[#F2EBDD]/95'} px-[clamp(1rem,4vw,1.5rem)] pt-[max(1.25rem,env(safe-area-inset-top,0px))] pb-2`}>
-      <div className={`mx-auto w-full ${wide ? 'max-w-md md:max-w-3xl' : 'max-w-md md:max-w-xl'}`}>
-        <button
-          type="button"
-          onClick={onBack}
-          className={`flex items-center text-xs uppercase tracking-widest hover:text-[#B08A4F] transition-colors cursor-pointer ${
-            dark ? 'text-[#F2EBDD]' : 'text-[#102F27]'
-          }`}
-        >
-          <ChevronLeft className="w-4 h-4 mr-1" /> Back
-        </button>
-      </div>
-    </div>
-    <div className="px-[clamp(1rem,4vw,1.5rem)] pt-2 pb-[max(5rem,env(safe-area-inset-bottom,0px)+4rem)]">
-      <div className={`mx-auto min-w-0 w-full ${wide ? 'max-w-md md:max-w-3xl' : 'max-w-md md:max-w-xl'}`}>
-        {children}
-      </div>
-    </div>
-  </motion.div>
+// Mobile story pages: each has its own look (photo cover, emerald, forest, arch photo, photo backdrop)
+// so the pages don't feel the same. Shared pieces below.
+
+const easeOut = [0.16, 1, 0.3, 1] as const;
+// Sections fade up as they scroll into view
+const reveal = {
+  initial: { opacity: 0, y: 20 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: '-40px' },
+  transition: { duration: 0.8, ease: easeOut },
+} as const;
+const pageX = 'px-[clamp(1rem,5vw,1.5rem)]';
+const belowBack = 'pt-[max(4.5rem,calc(env(safe-area-inset-top,0px)+3.5rem))]';
+
+// Back chip that stays at the top-left while the page scrolls
+const BackChip: React.FC<{ onBack: () => void; light?: boolean }> = ({ onBack, light = false }) => (
+  <div className="sticky top-0 z-20 h-0">
+    <button
+      type="button"
+      onClick={onBack}
+      className={`absolute left-[clamp(1rem,5vw,1.5rem)] top-[max(1rem,env(safe-area-inset-top,0px))] flex items-center rounded-full px-3 py-1.5 text-[10px] uppercase tracking-[0.25em] backdrop-blur-md transition-colors cursor-pointer ${
+        light ? 'bg-[#102F27]/35 text-white hover:bg-[#102F27]/55' : 'bg-[#F2EBDD]/85 text-[#102F27] shadow-sm hover:text-[#B08A4F]'
+      }`}
+    >
+      <ChevronLeft className="mr-0.5 h-3.5 w-3.5" /> Back
+    </button>
+  </div>
 );
 
-const PageTitle: React.FC<{ children: React.ReactNode; sub?: string }> = ({ children, sub }) => (
-  <div className="mb-8 text-center">
-    <h2 className="font-serif text-[clamp(1.75rem,6vw,2.25rem)] font-semibold uppercase tracking-wide text-[#102F27] leading-tight">
+// Script eyebrow + tall Oswald title + sprig (same voice as the hero)
+const StoryHeading: React.FC<{ eyebrow: string; children: React.ReactNode; light?: boolean; className?: string }> = ({
+  eyebrow,
+  children,
+  light = false,
+  className = '',
+}) => (
+  <div className={`text-center ${className}`}>
+    <p className={`font-['Parisienne'] text-[1.7rem] leading-none ${light ? 'text-[#E6D3AE]' : 'text-[#B08A4F]'}`}>{eyebrow}</p>
+    <h2
+      className={`mt-2 font-['Oswald'] text-[clamp(1.9rem,9.5vw,2.6rem)] font-light uppercase leading-[1.15] tracking-[0.25em] pl-[0.25em] ${
+        light ? 'text-white' : 'text-[#102F27]'
+      }`}
+    >
       {children}
     </h2>
-    {sub && <p className="mt-2 text-[11px] uppercase tracking-[0.25em] text-[#78947F]">{sub}</p>}
+    <Sprig className={`mx-auto mt-3 w-14 ${light ? 'text-white/80' : 'text-[#185844]/70'}`} />
   </div>
 );
 
@@ -88,60 +94,90 @@ export const DetailsPage: React.FC<DetailsPageProps> = ({
   mapsReceptionUrl,
 }) => {
   const venues = [
-    { label: 'Ceremony', name: churchName, address: churchAddress, img: jardinVenueImg, url: mapsChurchUrl, accent: 'border-[#B08A4F]', time: ceremonyTime },
-    { label: 'Reception', name: receptionName, address: receptionAddress, img: tablescapeImg, url: mapsReceptionUrl, accent: 'border-[#185844]' },
+    { label: 'Ceremony', name: churchName, address: churchAddress, img: jardinVenueImg, url: mapsChurchUrl, time: ceremonyTime },
+    { label: 'Reception', name: receptionName, address: receptionAddress, img: tablescapeImg, url: mapsReceptionUrl },
   ];
 
+  // One ivory page: the two venues as polaroids beside their details, then the dress code
   return (
-    <PageShell onBack={onBack} wide>
-      <PageTitle>Ceremony &amp; Reception</PageTitle>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-6 mb-12">
-        {venues.map((v) => (
-          <div key={v.label} className="flex flex-col rounded-2xl bg-white p-4 shadow-[0_8px_30px_rgba(16,47,39,0.06)]">
-            <h3 className={`font-serif text-xl text-[#102F27] mb-3 border-l-2 ${v.accent} pl-2`}>{v.label}</h3>
-            <img src={v.img} alt={v.name} className="w-full aspect-[4/3] object-cover rounded-xl mb-3" />
-            <p className="text-sm text-[#102F27] leading-relaxed mb-4">
-              <strong>{v.name}</strong>
-              <br />
-              {v.address}
-              {v.time && (
-                <>
-                  <br />
-                  {v.time}
-                </>
-              )}
-            </p>
-            <a
-              href={v.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-auto flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl border border-stone-200 bg-white text-[#102F27] hover:border-[#185844] transition-colors text-sm font-medium"
-            >
-              <Navigation className="w-4 h-4 text-[#185844]" />
-              Get directions
-            </a>
+    <div className="min-h-[100dvh] bg-[#F2EBDD] text-[#102F27]">
+      <BackChip onBack={onBack} />
+      <div className={`${pageX} ${belowBack} pb-6`}>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.3, ease: easeOut }}
+        >
+          {/* One line like the desktop heading, sized to fit the phone width */}
+          <div className="text-center">
+            <p className="font-['Parisienne'] text-[1.5rem] leading-none text-[#B08A4F]">when &amp; where</p>
+            <h2 className="mt-3 whitespace-nowrap font-['Oswald'] text-[clamp(1.05rem,5.6vw,1.6rem)] font-light uppercase tracking-[0.22em] pl-[0.22em] text-[#102F27]">
+              Ceremony &amp; Reception
+            </h2>
+            <Sprig className="mx-auto mt-3 w-14 text-[#185844]/70" />
           </div>
-        ))}
-      </div>
+        </motion.div>
 
-      {/* Dress Code */}
-      <div className="flex flex-col items-center text-center pt-8 border-t border-[#102F27]/10">
-        <h2 className="font-serif text-3xl text-[#102F27] mb-2">Dress Code</h2>
-        <p className="text-[11px] uppercase tracking-[0.25em] text-[#78947F] mb-8">Formal attire</p>
-        <div className="grid grid-cols-4 gap-3 sm:gap-8 w-full max-w-md">
-          {DRESS_CODE.map((c) => (
-            <div key={c.name} className="flex flex-col items-center gap-3 min-w-0">
-              <div
-                className="w-full max-w-16 aspect-square rounded-full shadow-md border border-black/10"
-                style={{ backgroundColor: c.hex }}
-              />
-              <span className="uppercase tracking-widest text-[10px] font-medium text-[#102F27]">{c.name}</span>
-            </div>
-          ))}
+        {/* Venues: a tilted polaroid beside the details, sides swapping for the reception */}
+        <div className="mx-auto mt-10 max-w-sm space-y-12">
+          {venues.map((v, i) => {
+            const flip = i % 2 === 1;
+            return (
+              <motion.div key={v.label} {...reveal} className={`flex items-center gap-5 ${flip ? 'flex-row-reverse text-right' : ''}`}>
+                <div
+                  className={`w-[46%] shrink-0 bg-white p-2 pb-1 shadow-[0_10px_25px_rgba(16,47,39,0.15)] ${flip ? 'rotate-3' : '-rotate-3'}`}
+                >
+                  <img src={v.img} alt={v.name} className="block aspect-[4/5] w-full object-cover" />
+                  <p className="py-1.5 text-center font-['Parisienne'] text-xl leading-none text-[#185844]">
+                    the {v.label.toLowerCase()}
+                  </p>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-serif text-[1.4rem] leading-[1.15]">{v.name}</h3>
+                  {v.time && (
+                    <p className="mt-2 font-['Oswald'] text-sm font-light uppercase tracking-[0.25em] text-[#185844]">{v.time}</p>
+                  )}
+                  <p className="mt-2 text-[11px] leading-relaxed text-stone-500">{v.address}</p>
+                  <a
+                    href={v.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-1.5 border-b border-[#B08A4F]/60 pb-0.5 font-['Oswald'] text-[10px] font-light uppercase tracking-[0.3em] text-[#185844] transition-colors hover:text-[#B08A4F]"
+                  >
+                    <Navigation className="h-3 w-3" />
+                    Directions
+                  </a>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
+
+        {/* Dress code, like a printed "Wedding Attire" card: script + spaced caps title, a short note,
+            then the palette as a row of arches */}
+        <motion.div {...reveal} className="mx-auto mt-16 max-w-sm text-center">
+          <h3>
+            <img
+              src={weddingAttireTitleImg}
+              alt="Wedding Attire"
+              draggable={false}
+              className="mx-auto block h-auto w-[min(100%,20rem)] select-none"
+            />
+          </h3>
+          <p className="mx-auto mt-5 max-w-[20rem] font-serif text-[15px] leading-relaxed text-[#102F27]/80">
+            We would love to see you dressed in formal attire in the colors of our day. Kindly avoid white and ivory.
+          </p>
+          <div className="mt-6 grid grid-cols-4 gap-2">
+            {DRESS_CODE.map((c) => (
+              <div key={c.name} className="flex min-w-0 flex-col items-center">
+                <div className="aspect-[3/4] w-full rounded-t-full shadow-[0_6px_14px_rgba(16,47,39,0.15)]" style={{ backgroundColor: c.hex }} />
+                <span className="mt-2 font-['Oswald'] text-[9px] font-light uppercase tracking-[0.2em] text-[#102F27]/70">{c.name}</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
       </div>
-    </PageShell>
+    </div>
   );
 };
 
@@ -242,17 +278,28 @@ export const TimelineIcon: React.FC<LineIconProps & { icon: TimelineItem['icon']
   return <Icon className={className} />;
 };
 
-export const TimelinePage: React.FC<{ onBack: () => void; timeline: TimelineItem[]; coupleLine?: string }> = ({
-  onBack,
-  timeline,
-  coupleLine,
-}) => (
+export const TimelinePage: React.FC<{
+  onBack: () => void;
+  timeline: TimelineItem[];
+  coupleLine?: string;
+  /** Shown under the rail inside the one-screen layout (e.g. the story's Next cue) */
+  footer?: React.ReactNode;
+}> = ({ onBack, timeline, coupleLine, footer }) => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     transition={{ duration: 0.6, ease: 'easeInOut' }}
-    className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F2EBDD] text-[#102F27] pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]"
+    className="relative isolate flex h-[100dvh] w-full flex-col overflow-hidden bg-[#F2EBDD] text-[#102F27] pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1.5rem,env(safe-area-inset-bottom,0px))]"
   >
+    {/* Faint couple photo behind the top part of the page; it fades out around the 6:00 PM row,
+        leaving the rest of the timeline on plain ivory */}
+    <img
+      src={meadowCoupleImg}
+      alt=""
+      aria-hidden
+      draggable={false}
+      className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-[60%_center] opacity-[0.3] grayscale-[30%] [mask-image:linear-gradient(to_bottom,black_40%,transparent_58%)]"
+    />
     <button
       type="button"
       onClick={onBack}
@@ -320,39 +367,49 @@ export const TimelinePage: React.FC<{ onBack: () => void; timeline: TimelineItem
       })}
     </ol>
     </div>
+    {footer}
   </motion.div>
 );
 
-// --- ENTOURAGE ---
+// --- ENTOURAGE: forest page, gold headings, ivory names ---
 export const EntouragePage: React.FC<{ onBack: () => void; categories: EntourageCategory[] }> = ({
   onBack,
   categories,
 }) => (
-  <PageShell onBack={onBack}>
-    <div className="mb-9 text-center">
+  <div className="min-h-[100dvh] bg-[#102F27] text-[#F2EBDD]">
+    <BackChip onBack={onBack} light />
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 1, delay: 0.3, ease: easeOut }}
+      className={`${pageX} ${belowBack} text-center`}
+    >
       <img
         src={entourageTitleImg}
         alt="The Entourage"
-        className="mx-auto block h-[clamp(2.25rem,11vw,3.75rem)] w-auto max-w-[min(100%,340px)] object-contain"
+        className="mx-auto block h-[clamp(2.5rem,12vw,3.75rem)] w-auto max-w-[min(100%,340px)] object-contain"
       />
-    </div>
-    <div className="text-center flex flex-col gap-10">
+      <Sprig className="mx-auto mt-4 w-14 text-[#B08A4F]" />
+    </motion.div>
+
+    <div className={`mt-10 space-y-10 ${pageX} pb-8 text-center`}>
       {categories.map((group) => (
-        <div key={group.category}>
-          <h3 className="font-sans text-sm font-bold tracking-[0.2em] text-[#102F27] uppercase mb-3">
+        <motion.section key={group.category} {...reveal}>
+          <h3 className="font-['Oswald'] text-xs font-light uppercase tracking-[0.4em] pl-[0.4em] text-[#B08A4F]">
             {group.category.split('(')[0].trim()}
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+          <span className="mx-auto mt-2 block h-px w-10 bg-[#B08A4F]/50" />
+          <div className="mt-4 space-y-1.5">
             {group.members.map((m) => (
-              <p key={`${m.role}-${m.name}`} className="font-sans text-xs tracking-widest text-[#185844] uppercase leading-relaxed">
+              <p key={`${m.role}-${m.name}`} className="font-serif text-lg leading-snug">
                 {m.name}
               </p>
             ))}
           </div>
-        </div>
+        </motion.section>
       ))}
     </div>
-  </PageShell>
+  </div>
 );
 
 // --- RSVP form (shared by the mobile RSVP page and the desktop site) ---
@@ -364,6 +421,24 @@ const MAX_GUESTS = 10;
 // One person per guest field: "Ana / Ben", "Ana & Ben", "Ana, Ben", "Ana and Ben" are rejected ("Roxas, Jr." is fine)
 // (keep in sync with MULTI_NAME in src/server/index.ts)
 const MULTI_NAME = /[\/&+]|\band\b|,(?!\s*(?:jr|sr|ii|iii|iv)\.?\s*$)/i;
+
+// Big tap-friendly choice for the RSVP form (a styled radio)
+const Choice: React.FC<{ name: string; checked: boolean; locked: boolean; onChange: () => void; children: React.ReactNode }> = ({
+  name,
+  checked,
+  locked,
+  onChange,
+  children,
+}) => (
+  <label
+    className={`flex min-h-[3rem] cursor-pointer items-center justify-center rounded-xl border px-2 py-2 text-center text-[11px] font-medium uppercase leading-snug tracking-[0.15em] transition-colors ${
+      checked ? 'border-[#185844] bg-[#185844] text-white' : 'border-stone-200 bg-white/70 text-[#102F27] hover:border-[#185844]/50'
+    } ${locked ? 'pointer-events-none opacity-70' : ''}`}
+  >
+    <input type="radio" name={name} disabled={locked} checked={checked} onChange={onChange} className="sr-only" />
+    {children}
+  </label>
+);
 
 export const RsvpForm: React.FC<{
   /** Mobile: called 3s after submit (popup shown). Desktop: omitted, thank-you shows inline. */
@@ -446,108 +521,109 @@ export const RsvpForm: React.FC<{
   };
 
   const locked = submitted || submitting;
+  // 16px text on inputs so iPhones don't zoom in while typing
   const inputClass =
-    'w-full rounded-xl border border-stone-200 bg-[#F2EBDD]/40 px-3 py-2.5 text-sm text-[#102F27] focus:outline-none focus:ring-2 focus:ring-[#185844]/30 focus:border-[#185844] placeholder:text-stone-400';
-  const radioClass = 'w-4 h-4 mt-0.5 shrink-0 accent-[#185844]';
-  const optionText = 'uppercase tracking-[0.2em] text-xs';
+    'w-full rounded-xl border border-stone-200 bg-white/70 px-3.5 py-2.5 text-base text-[#102F27] focus:outline-none focus:ring-2 focus:ring-[#185844]/25 focus:border-[#185844] placeholder:text-stone-400 disabled:opacity-60';
+  const labelClass = 'block text-[10px] uppercase tracking-[0.25em] text-[#78947F]';
 
   return (
     <>
       <form onSubmit={handleSubmit} className={`space-y-5 ${className}`}>
-        <div className="space-y-1">
-          <label className="block text-xs uppercase tracking-[0.25em] text-[#78947F]">Full Name</label>
-          <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="Your name" disabled={locked} />
+        <div className="space-y-1.5">
+          <label className={labelClass}>Full Name</label>
+          <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="Your name" autoComplete="name" disabled={locked} />
         </div>
 
-        <div className="space-y-1">
-          <label className="block text-xs uppercase tracking-[0.25em] text-[#78947F]">
+        <div className="space-y-1.5">
+          <label className={labelClass}>
             Contact Number <span className="normal-case tracking-normal text-stone-400">(optional)</span>
           </label>
-          <input type="tel" value={contact} onChange={(e) => setContact(e.target.value)} className={inputClass} placeholder="09xx xxx xxxx" disabled={locked} />
+          <input type="tel" inputMode="tel" value={contact} onChange={(e) => setContact(e.target.value)} className={inputClass} placeholder="09xx xxx xxxx" autoComplete="tel" disabled={locked} />
         </div>
 
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.25em] text-[#78947F]">Kindly let us know</p>
-          <div className="flex flex-col gap-3 min-[400px]:flex-row min-[400px]:items-center min-[400px]:gap-4">
+          <p className={labelClass}>Kindly let us know</p>
+          <div className="grid grid-cols-2 gap-2">
             {([
               ['yes', 'Accepts with pleasure'],
               ['no', 'Declines with regret'],
             ] as const).map(([value, label]) => (
-              <label key={value} className="inline-flex items-start gap-2 text-sm text-[#102F27] cursor-pointer">
-                <input
-                  type="radio"
-                  name="attendance"
-                  disabled={locked}
-                  className={radioClass}
-                  checked={isAttending === value}
-                  onChange={() => {
-                    setIsAttending(value);
-                    if (value === 'no') {
-                      setBringsGuest('');
-                      setGuestNames(['']);
-                    }
-                  }}
-                />
-                <span className={optionText}>{label}</span>
-              </label>
+              <Choice
+                locked={locked}
+                key={value}
+                name="attendance"
+                checked={isAttending === value}
+                onChange={() => {
+                  setIsAttending(value);
+                  if (value === 'no') {
+                    setBringsGuest('');
+                    setGuestNames(['']);
+                  }
+                }}
+              >
+                {label}
+              </Choice>
             ))}
           </div>
         </div>
 
         {/* Plus-ones: anyone attending can bring 1..MAX_GUESTS named guests */}
         {showPlusOne && (
-          <div className="rounded-xl border border-[#185844]/15 bg-[#F2EBDD]/50 p-4 space-y-3">
-            <p className="text-xs uppercase tracking-[0.25em] text-[#78947F]">Will you bring any guests?</p>
-            <div className="flex items-center gap-6">
+          <div className="space-y-2">
+            <p className={labelClass}>Will you bring any guests?</p>
+            <div className="grid grid-cols-2 gap-2">
               {(['yes', 'no'] as const).map((value) => (
-                <label key={value} className="inline-flex items-start gap-2 text-sm text-[#102F27] cursor-pointer">
-                  <input
-                    type="radio"
-                    name="brings-guest"
-                    disabled={locked}
-                    className={radioClass}
-                    checked={bringsGuest === value}
-                    onChange={() => {
-                      setBringsGuest(value);
-                      if (value === 'no') setGuestNames(['']);
-                    }}
-                  />
-                  <span className={optionText}>{value === 'yes' ? 'Yes' : 'No'}</span>
-                </label>
+                <Choice
+                  key={value}
+                  locked={locked}
+                  name="brings-guest"
+                  checked={bringsGuest === value}
+                  onChange={() => {
+                    setBringsGuest(value);
+                    if (value === 'no') setGuestNames(['']);
+                  }}
+                >
+                  {value === 'yes' ? 'Yes' : 'No'}
+                </Choice>
               ))}
             </div>
             {bringsGuest === 'yes' && (
-              <div className="space-y-2 pt-2 border-t border-[#185844]/10">
-                <label className="block text-[10px] uppercase tracking-[0.25em] text-[#78947F]">
-                  Guest full name{guestNames.length > 1 ? 's' : ''}
-                </label>
+              <div className="space-y-2 pt-2">
+                <p className={labelClass}>
+                  Guest full name{guestNames.length > 1 ? 's' : ''}{' '}
+                  <span className="normal-case tracking-normal text-stone-400">({guestNames.length}/{MAX_GUESTS})</span>
+                </p>
                 {guestNames.map((guest, i) => (
-                  <div key={i} className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={guest}
-                      onChange={(e) => setGuestName(i, e.target.value)}
-                      disabled={locked}
-                      placeholder={`Guest ${i + 1} full name`}
-                      aria-label={`Guest ${i + 1} full name`}
-                      className={inputClass}
-                    />
-                    {guestNames.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeGuest(i)}
+                  <div key={i}>
+                    {/* Number on the left, remove (x) inside the field so the input keeps the full width */}
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-[#B08A4F] tabular-nums">
+                        {i + 1}.
+                      </span>
+                      <input
+                        type="text"
+                        value={guest}
+                        onChange={(e) => setGuestName(i, e.target.value)}
                         disabled={locked}
-                        aria-label={`Remove guest ${i + 1}`}
-                        className="shrink-0 rounded-full p-2 text-stone-400 hover:bg-white hover:text-red-700 transition-colors cursor-pointer"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
+                        placeholder="Full name"
+                        aria-label={`Guest ${i + 1} full name`}
+                        className={`${inputClass} pl-8 ${guestNames.length > 1 ? 'pr-10' : ''}`}
+                      />
+                      {guestNames.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeGuest(i)}
+                          disabled={locked}
+                          aria-label={`Remove guest ${i + 1}`}
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full p-2 text-stone-400 hover:text-red-700 transition-colors cursor-pointer"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    {MULTI_NAME.test(guest) && (
+                      <p className="mt-1 pl-1 text-[11px] text-red-600">One person per field. Use “Add another guest” for the next person.</p>
                     )}
-                  </div>
-                  {MULTI_NAME.test(guest) && (
-                    <p className="pl-1 text-[11px] text-red-600">One person per field. Use “Add another guest” for the next person.</p>
-                  )}
                   </div>
                 ))}
                 {guestNames.length < MAX_GUESTS && (
@@ -555,7 +631,7 @@ export const RsvpForm: React.FC<{
                     type="button"
                     onClick={addGuest}
                     disabled={locked}
-                    className="inline-flex items-center gap-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#185844] hover:text-[#102F27] transition-colors cursor-pointer"
+                    className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#185844]/35 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#185844] hover:bg-white/60 transition-colors cursor-pointer"
                   >
                     <Plus className="h-3.5 w-3.5" /> Add another guest
                   </button>
@@ -595,15 +671,33 @@ export const RsvpForm: React.FC<{
   );
 };
 
-// --- RSVP ---
+// --- RSVP: candlelit photo backdrop with the form on an ivory card ---
 export const RsvpPage: React.FC<{
   onBack: () => void;
   rsvpDeadline: string;
 }> = ({ onBack, rsvpDeadline }) => (
-  <PageShell onBack={onBack}>
-    <PageTitle sub={`by ${rsvpDeadline}`}>RSVP</PageTitle>
-    <RsvpForm onDone={onBack} className="bg-white rounded-[2rem] p-6 shadow-[0_8px_30px_rgba(16,47,39,0.06)]" />
-  </PageShell>
+  <div className="relative min-h-[100dvh] overflow-hidden text-white">
+    <img src={tablescapeImg} alt="" className="absolute inset-0 h-full w-full object-cover" />
+    <div className="absolute inset-0 bg-[#102F27]/75" />
+    <BackChip onBack={onBack} light />
+    <div className={`relative ${pageX} ${belowBack} pb-[max(2.5rem,env(safe-area-inset-bottom,0px))]`}>
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 0.3, ease: easeOut }}
+      >
+        <StoryHeading eyebrow="kindly respond" light>
+          Will you
+          <br />
+          join us?
+        </StoryHeading>
+        <p className="mt-4 text-center font-['Oswald'] text-[11px] font-light uppercase tracking-[0.4em] pl-[0.4em] text-white/75">
+          by {rsvpDeadline}
+        </p>
+      </motion.div>
+      <RsvpForm onDone={onBack} className="mx-auto mt-7 max-w-md rounded-[1.75rem] bg-[#F2EBDD] p-[clamp(1.1rem,5vw,1.5rem)] text-[#102F27] shadow-2xl" />
+    </div>
+  </div>
 );
 
 // --- FAQ accordion (shared by the mobile FAQ page and the desktop site) ---
@@ -642,10 +736,90 @@ export const FaqList: React.FC<{ variant?: 'cards' | 'flat' }> = ({ variant = 'c
   );
 };
 
-// --- FAQS ---
+// --- FAQS: text-only header, numbered question cards; the open one lifts and its toggle turns emerald ---
+const FaqNumbered: React.FC = () => {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  return (
+    <ol className="space-y-3">
+      {FAQS_DATA.map((item, index) => {
+        const isOpen = openIndex === index;
+        return (
+          <motion.li
+            key={item.question}
+            {...reveal}
+            transition={{ ...reveal.transition, delay: Math.min(index, 4) * 0.05 }}
+            className={`relative overflow-hidden rounded-2xl border transition-[background-color,border-color,box-shadow] duration-300 ${
+              isOpen
+                ? 'border-[#B08A4F]/35 bg-white/75 shadow-[0_12px_30px_-12px_rgba(16,47,39,0.18)]'
+                : 'border-[#B08A4F]/15 bg-white/35'
+            }`}
+          >
+            {/* thin gold edge on the open card */}
+            <span
+              aria-hidden
+              className={`absolute inset-y-4 left-0 w-[2px] rounded-full bg-[#B08A4F] transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}
+            />
+            <button
+              type="button"
+              onClick={() => setOpenIndex(isOpen ? null : index)}
+              aria-expanded={isOpen}
+              className="flex w-full items-center gap-3.5 px-4 py-4 text-left cursor-pointer"
+            >
+              <span className="w-7 shrink-0 font-serif text-[1.6rem] italic leading-none text-[#B08A4F] tabular-nums">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <span className="flex-1 font-serif text-[1.08rem] font-medium leading-snug text-[#102F27]">{item.question}</span>
+              <span
+                aria-hidden
+                className={`relative grid h-7 w-7 shrink-0 place-items-center rounded-full border transition-colors duration-300 ${
+                  isOpen ? 'border-[#185844] bg-[#185844]' : 'border-[#B08A4F]/50 bg-transparent'
+                }`}
+              >
+                <span className={`absolute h-px w-2.5 ${isOpen ? 'bg-[#F2EBDD]' : 'bg-[#B08A4F]'}`} />
+                <span
+                  className={`absolute h-2.5 w-px bg-[#B08A4F] transition-transform duration-300 ${isOpen ? 'scale-y-0' : 'scale-y-100'}`}
+                />
+              </span>
+            </button>
+            <motion.div
+              initial={false}
+              animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
+              transition={{ duration: 0.35, ease: easeOut }}
+              className="overflow-hidden"
+            >
+              <div className="ml-[3.6rem] mr-5 border-t border-[#B08A4F]/25 pb-5 pt-3.5">
+                <p className="font-serif text-[15px] leading-relaxed text-[#102F27]/75">{item.answer}</p>
+              </div>
+            </motion.div>
+          </motion.li>
+        );
+      })}
+    </ol>
+  );
+};
+
 export const FaqPage: React.FC<{ onBack: () => void }> = ({ onBack }) => (
-  <PageShell onBack={onBack}>
-    <PageTitle>FAQs</PageTitle>
-    <FaqList />
-  </PageShell>
+  <div className="min-h-[100dvh] bg-[#F2EBDD] text-[#102F27]">
+    <BackChip onBack={onBack} />
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 1, delay: 0.25, ease: easeOut }}
+      className={`${pageX} pt-[max(6rem,calc(env(safe-area-inset-top,0px)+5rem))] text-center`}
+    >
+      <StoryHeading eyebrow="good to know">FAQs</StoryHeading>
+      <p className="mx-auto mt-5 max-w-[18rem] font-serif text-[15px] italic leading-relaxed text-[#102F27]/70">
+        A few answers to help you plan for our day.
+      </p>
+    </motion.div>
+    <div className={`mx-auto mt-9 max-w-md ${pageX} pb-6`}>
+      <FaqNumbered />
+      <motion.div {...reveal} className="mt-10 text-center">
+        <p className="font-script text-2xl text-[#B08A4F]">still wondering?</p>
+        <p className="mx-auto mt-1 max-w-[15rem] text-balance font-serif text-[15px] italic leading-relaxed text-[#102F27]/65">
+          Feel free to message us anytime, we&rsquo;re happy to help.
+        </p>
+      </motion.div>
+    </div>
+  </div>
 );
