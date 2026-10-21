@@ -44,16 +44,16 @@ const BackChip: React.FC<{ onBack: () => void; light?: boolean }> = ({ onBack, l
 );
 
 // Script eyebrow + tall Oswald title + sprig (same voice as the hero)
-const StoryHeading: React.FC<{ eyebrow: string; children: React.ReactNode; light?: boolean; className?: string }> = ({
+const StoryHeading: React.FC<{ eyebrow?: string; children: React.ReactNode; light?: boolean; className?: string }> = ({
   eyebrow,
   children,
   light = false,
   className = '',
 }) => (
   <div className={`text-center ${className}`}>
-    <p className={`font-['Parisienne'] text-[1.7rem] leading-none ${light ? 'text-[#E6D3AE]' : 'text-[#B08A4F]'}`}>{eyebrow}</p>
+    {eyebrow && <p className={`mb-2 font-['Parisienne'] text-[1.7rem] leading-none ${light ? 'text-[#E6D3AE]' : 'text-[#B08A4F]'}`}>{eyebrow}</p>}
     <h2
-      className={`mt-2 font-['Oswald'] text-[clamp(1.9rem,9.5vw,2.6rem)] font-light uppercase leading-[1.15] tracking-[0.25em] pl-[0.25em] ${
+      className={`font-['Oswald'] text-[clamp(1.9rem,9.5vw,2.6rem)] font-light uppercase leading-[1.15] tracking-[0.25em] pl-[0.25em] ${
         light ? 'text-white' : 'text-[#102F27]'
       }`}
     >
@@ -109,8 +109,7 @@ export const DetailsPage: React.FC<DetailsPageProps> = ({
         >
           {/* One line like the desktop heading, sized to fit the phone width */}
           <div className="text-center">
-            <p className="font-['Parisienne'] text-[1.5rem] leading-none text-[#B08A4F]">when &amp; where</p>
-            <h2 className="mt-3 whitespace-nowrap font-['Oswald'] text-[clamp(1.05rem,5.6vw,1.6rem)] font-light uppercase tracking-[0.22em] pl-[0.22em] text-[#102F27]">
+            <h2 className="whitespace-nowrap font-['Oswald'] text-[clamp(1.05rem,5.6vw,1.6rem)] font-light uppercase tracking-[0.22em] pl-[0.22em] text-[#102F27]">
               Ceremony &amp; Reception
             </h2>
             <Sprig className="mx-auto mt-3 w-14 text-[#185844]/70" />
@@ -733,48 +732,57 @@ export const FaqList: React.FC<{ variant?: 'cards' | 'flat' }> = ({ variant = 'c
   );
 };
 
-// --- FAQS: text-only header, numbered question cards; the open one lifts and its toggle turns emerald ---
-const FaqNumbered: React.FC = () => {
+// --- FAQS: forest band with thin gold diagonals at the top, an ivory card overlapping it with
+// "+ FAQs" and an accordion (round +/- toggles). Numbered answer lines ("1. …") show as steps.
+const FaqAnswer: React.FC<{ text: string }> = ({ text }) => {
+  const lines = text.split('\n').filter(Boolean);
+  const isStep = (l: string) => /^\d+\.\s/.test(l);
+  const steps = lines.filter(isStep);
+  return (
+    <div className="text-[14px] leading-[1.7] text-[#102F27]/75">
+      {lines
+        .filter((l) => !isStep(l))
+        .map((l) => (
+          <p key={l}>{l}</p>
+        ))}
+      {steps.length > 0 && (
+        <ol className="mt-2.5 space-y-2">
+          {steps.map((l, i) => (
+            <li key={l} className="flex gap-2.5">
+              <span className="w-3 shrink-0 font-serif text-[1.05rem] font-semibold italic leading-[1.45] text-[#B08A4F] lining-nums">{i + 1}</span>
+              <span>{l.replace(/^\d+\.\s*/, '')}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+};
+
+const FaqAccordion: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   return (
-    <ol className="space-y-3">
+    <ul className="mt-5 divide-y divide-[#B08A4F]/20 border-t border-[#B08A4F]/20">
       {FAQS_DATA.map((item, index) => {
         const isOpen = openIndex === index;
         return (
-          <motion.li
-            key={item.question}
-            {...reveal}
-            transition={{ ...reveal.transition, delay: Math.min(index, 4) * 0.05 }}
-            className={`relative overflow-hidden rounded-2xl border transition-[background-color,border-color,box-shadow] duration-300 ${
-              isOpen
-                ? 'border-[#B08A4F]/35 bg-white/75 shadow-[0_12px_30px_-12px_rgba(16,47,39,0.18)]'
-                : 'border-[#B08A4F]/15 bg-white/35'
-            }`}
-          >
-            {/* thin gold edge on the open card */}
-            <span
-              aria-hidden
-              className={`absolute inset-y-4 left-0 w-[2px] rounded-full bg-[#B08A4F] transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}
-            />
+          <li key={item.question}>
             <button
               type="button"
               onClick={() => setOpenIndex(isOpen ? null : index)}
               aria-expanded={isOpen}
-              className="flex w-full items-center gap-3.5 px-4 py-4 text-left cursor-pointer"
+              className="flex w-full items-center justify-between gap-4 py-[1.1rem] text-left cursor-pointer"
             >
-              <span className="w-7 shrink-0 font-serif text-[1.6rem] italic leading-none text-[#B08A4F] tabular-nums">
-                {String(index + 1).padStart(2, '0')}
-              </span>
-              <span className="flex-1 font-serif text-[1.25rem] font-semibold leading-snug text-[#102F27]">{item.question}</span>
+              <span className="font-serif text-[1.15rem] font-semibold leading-snug text-[#102F27]">{item.question}</span>
               <span
                 aria-hidden
-                className={`relative grid h-7 w-7 shrink-0 place-items-center rounded-full border transition-colors duration-300 ${
-                  isOpen ? 'border-[#185844] bg-[#185844]' : 'border-[#B08A4F]/50 bg-transparent'
+                className={`relative grid h-7 w-7 shrink-0 place-items-center rounded-full transition-colors duration-300 ${
+                  isOpen ? 'bg-[#102F27]' : 'bg-[#185844]'
                 }`}
               >
-                <span className={`absolute h-px w-2.5 ${isOpen ? 'bg-[#F2EBDD]' : 'bg-[#B08A4F]'}`} />
+                <span className="absolute h-[1.5px] w-3 rounded-full bg-[#F2EBDD]" />
                 <span
-                  className={`absolute h-2.5 w-px bg-[#B08A4F] transition-transform duration-300 ${isOpen ? 'scale-y-0' : 'scale-y-100'}`}
+                  className={`absolute h-3 w-[1.5px] rounded-full bg-[#F2EBDD] transition-transform duration-300 ${isOpen ? 'scale-y-0' : 'scale-y-100'}`}
                 />
               </span>
             </button>
@@ -784,39 +792,45 @@ const FaqNumbered: React.FC = () => {
               transition={{ duration: 0.35, ease: easeOut }}
               className="overflow-hidden"
             >
-              <div className="ml-[3.6rem] mr-5 border-t border-[#B08A4F]/25 pb-5 pt-3.5">
-                <p className="whitespace-pre-line text-[15px] leading-[1.7] text-[#102F27]/85">{item.answer}</p>
+              <div className="pb-5 pr-9">
+                <FaqAnswer text={item.answer} />
               </div>
             </motion.div>
-          </motion.li>
+          </li>
         );
       })}
-    </ol>
+    </ul>
   );
 };
 
 export const FaqPage: React.FC<{ onBack: () => void }> = ({ onBack }) => (
-  <div className="min-h-[100dvh] bg-[#F2EBDD] text-[#102F27]">
-    <BackChip onBack={onBack} />
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 1, delay: 0.25, ease: easeOut }}
-      className={`${pageX} pt-[max(6rem,calc(env(safe-area-inset-top,0px)+5rem))] text-center`}
-    >
-      <StoryHeading eyebrow="good to know">FAQs</StoryHeading>
-      <p className="mx-auto mt-5 max-w-[18rem] font-serif text-[17px] italic leading-relaxed text-[#102F27]/80">
-        A few answers to help you plan for our day.
-      </p>
-    </motion.div>
-    <div className={`mx-auto mt-9 max-w-md ${pageX} pb-6`}>
-      <FaqNumbered />
-      <motion.div {...reveal} className="mt-10 text-center">
-        <p className="font-script text-2xl text-[#B08A4F]">still wondering?</p>
-        <p className="mx-auto mt-1 max-w-[15rem] text-balance font-serif text-[15px] italic leading-relaxed text-[#102F27]/65">
-          Feel free to message us anytime, we&rsquo;re happy to help.
-        </p>
+  <div className="relative min-h-[100dvh] bg-[#F2EBDD] text-[#102F27]">
+    {/* Forest band with two thin gold diagonals */}
+    <div aria-hidden className="absolute inset-x-0 top-0 h-[clamp(17rem,40dvh,22rem)] overflow-hidden bg-[#102F27]">
+      <span className="absolute right-[22%] -top-10 h-[130%] w-[2px] origin-top rotate-[32deg] bg-gradient-to-b from-[#B08A4F] via-[#B08A4F]/70 to-transparent" />
+      <span className="absolute right-[12%] -top-10 h-[130%] w-px origin-top rotate-[32deg] bg-gradient-to-b from-[#E6D3AE]/80 via-[#E6D3AE]/40 to-transparent" />
+      <Sprig className="absolute right-[clamp(1rem,5vw,1.5rem)] top-[max(1.1rem,env(safe-area-inset-top,0px))] w-14 text-[#E6D3AE]/60" />
+    </div>
+    <BackChip onBack={onBack} light />
+
+    <div className={`relative mx-auto max-w-md ${pageX} pb-6 pt-[max(8.5rem,calc(env(safe-area-inset-top,0px)+7.5rem))]`}>
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.9, delay: 0.2, ease: easeOut }}
+        className="rounded-[1.75rem] bg-[#FBF8F1] px-[clamp(1.25rem,6vw,1.75rem)] pb-3 pt-7 shadow-[0_24px_50px_-24px_rgba(16,47,39,0.45)]"
+      >
+        <h2 className="flex items-center gap-2.5">
+          <Plus className="h-6 w-6 text-[#B08A4F]" strokeWidth={2.25} aria-hidden />
+          <span className="font-serif text-[2.1rem] font-semibold leading-none text-[#102F27]">FAQs</span>
+        </h2>
+        <p className="mt-2 text-[14px] leading-relaxed text-[#102F27]/60">A few answers to help you plan for our day.</p>
+        <FaqAccordion />
       </motion.div>
+
+      <motion.p {...reveal} className="mx-auto mt-7 max-w-[17rem] text-balance text-center text-[13px] leading-relaxed text-[#102F27]/60">
+        Still have questions? Message us anytime, we&rsquo;re happy to help.
+      </motion.p>
     </div>
   </div>
 );

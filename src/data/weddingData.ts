@@ -175,21 +175,20 @@ export interface FaqItem {
 
 export const FAQS_DATA: FaqItem[] = [
   {
-    question: 'What is the dress code?',
-    answer: 'Formal or semi-formal. We kindly ask guests to follow our color palette (Sage, Emerald, Forest, and Antique Gold). Please avoid white and ivory, which are reserved for the bride.',
-  },
-  {
     question: 'Can I bring a plus-one?',
-    // Line breaks are kept on the FAQ page, so the steps show one per line
+    category: 'Plus-one',
+    // On the FAQ page, lines starting with "1.", "2."… show as numbered steps
     answer:
       'Yes, you can! To add your plus-one in the RSVP:\n1. Choose “Accepts with pleasure”.\n2. Under “Will you bring any guests?”, tap “Yes”.\n3. Type your guest’s full name.\n4. Bringing more than one? Tap “Add another guest” for each person (one name per field).',
   },
   {
     question: 'What is the "Unplugged Ceremony" policy?',
+    category: 'Unplugged ceremony',
     answer: 'We kindly ask everyone to put their phones away during the ceremony so it stays intimate and our photographers and videographers have a clear view.',
   },
   {
     question: 'Do you have a gift guide?',
+    category: 'Gifts',
     answer: 'Your presence and prayers are the greatest gift. If you wish to give something, a monetary gift for our new beginning would be sincerely appreciated.',
   },
 ];
