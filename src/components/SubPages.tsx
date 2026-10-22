@@ -6,6 +6,7 @@ import { getRsvpSourceForSubmit } from '../rsvpSource';
 import { FAQS_DATA } from '../data/weddingData';
 import { Sprig } from './Sprig';
 import jardinVenueImg from '../assets/images/jardin_venue_1791676573787.jpg';
+import churchImg from '../assets/images/CHRURCH.jpg';
 // Left half of the original two-photo image, so there's no seam line down the middle
 import tablescapeImg from '../assets/images/wedding_tablescape_candlelight_single.jpg';
 import entourageTitleImg from '../assets/images/the_entourage_title_ivory.svg';
@@ -93,7 +94,7 @@ export const DetailsPage: React.FC<DetailsPageProps> = ({
   mapsReceptionUrl,
 }) => {
   const venues = [
-    { label: 'Ceremony', name: churchName, address: churchAddress, img: jardinVenueImg, url: mapsChurchUrl, time: ceremonyTime },
+    { label: 'Ceremony', name: churchName, address: churchAddress, img: churchImg, url: mapsChurchUrl, time: ceremonyTime },
     { label: 'Reception', name: receptionName, address: receptionAddress, img: tablescapeImg, url: mapsReceptionUrl },
   ];
 
@@ -116,23 +117,23 @@ export const DetailsPage: React.FC<DetailsPageProps> = ({
           </div>
         </motion.div>
 
-        {/* Venues: a tilted polaroid beside the details, sides swapping for the reception */}
+        {/* Venues: a tilted landscape polaroid (whole photo, same as desktop) beside the details, sides swapping for the reception */}
         <div className="mx-auto mt-10 max-w-sm space-y-12">
           {venues.map((v, i) => {
             const flip = i % 2 === 1;
             return (
-              <motion.div key={v.label} {...reveal} className={`flex items-center gap-5 ${flip ? 'flex-row-reverse text-right' : ''}`}>
+              <motion.div key={v.label} {...reveal} className={`flex items-center gap-4 ${flip ? 'flex-row-reverse text-right' : ''}`}>
                 <div
-                  className={`w-[46%] shrink-0 bg-white p-2 pb-1 shadow-[0_10px_25px_rgba(16,47,39,0.15)] ${flip ? 'rotate-3' : '-rotate-3'}`}
+                  className={`w-[52%] shrink-0 bg-white p-1.5 pb-0.5 shadow-[0_10px_25px_rgba(16,47,39,0.15)] ${flip ? 'rotate-3' : '-rotate-3'}`}
                 >
-                  <img src={v.img} alt={v.name} className="block aspect-[4/5] w-full object-cover" />
+                  <img src={v.img} alt={v.name} className="block aspect-[4/3] w-full object-cover" />
                   {/* Same voice as the "Ceremony & Reception" title: light Oswald caps in forest */}
-                  <p className="pb-2 pt-2.5 pl-[0.22em] text-center font-['Oswald'] text-xs font-light uppercase leading-none tracking-[0.22em] text-[#102F27]">
+                  <p className="pb-2 pt-2 pl-[0.22em] text-center font-['Oswald'] text-[10px] font-light uppercase leading-none tracking-[0.22em] text-[#102F27]">
                     The {v.label}
                   </p>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-serif text-[1.4rem] leading-[1.15]">{v.name}</h3>
+                  <h3 className="font-serif text-[1.3rem] leading-[1.15]">{v.name}</h3>
                   {v.time && (
                     <p className="mt-2 font-['Oswald'] text-sm font-light uppercase tracking-[0.25em] text-[#185844]">{v.time}</p>
                   )}
@@ -257,6 +258,15 @@ const CarriageIcon: React.FC<LineIconProps> = ({ className }) => (
   </LineIcon>
 );
 
+const AssemblyIcon: React.FC<LineIconProps> = ({ className }) => (
+  <LineIcon className={className}>
+    <circle cx="24" cy="15" r="5.5" />
+    <path d="M13 38 Q13 25 24 25 Q35 25 35 38" />
+    <circle cx="10.5" cy="19" r="4" /><circle cx="37.5" cy="19" r="4" />
+    <path d="M3 35 Q3 26.5 10.5 26.5 Q13.5 26.5 15.5 28 M45 35 Q45 26.5 37.5 26.5 Q34.5 26.5 32.5 28 M3 41 H45" />
+  </LineIcon>
+);
+
 const TIMELINE_ICONS: Record<TimelineItem['icon'], React.FC<LineIconProps>> = {
   rings: RingsIcon,
   camera: CameraIcon,
@@ -269,6 +279,7 @@ const TIMELINE_ICONS: Record<TimelineItem['icon'], React.FC<LineIconProps>> = {
   church: RingsIcon,
   cocktail: DinnerIcon,
   party: NoteIcon,
+  assembly: AssemblyIcon,
 };
 
 /** Line icon for a timeline event (shared with the desktop timeline). */
@@ -399,11 +410,19 @@ export const EntouragePage: React.FC<{ onBack: () => void; categories: Entourage
             {group.category.split('(')[0].trim()}
           </h3>
           <span className="mx-auto mt-2 block h-px w-10 bg-[#B08A4F]/50" />
-          <div className="mt-4 space-y-1.5">
-            {group.members.map((m) => (
-              <p key={`${m.role}-${m.name}`} className="font-serif text-lg leading-snug">
-                {m.name}
-              </p>
+          {/* Same as desktop: bigger groups go two columns (sponsor pairs, groomsman beside bridesmaid) */}
+          {/* Two columns meet at the centre: left column right-aligned, right column left-aligned */}
+          <div className={group.members.length > 3 ? 'mt-4 grid grid-cols-2 gap-x-5 gap-y-2' : 'mt-4 space-y-1.5'}>
+            {group.members.map((m, i) => (
+              <div
+                key={`${m.role}-${m.name}`}
+                className={`${group.showRoles ? 'pt-1.5' : ''} ${group.members.length > 3 ? (i % 2 ? 'text-left' : 'text-right') : ''}`}
+              >
+                {group.showRoles && (
+                  <p className="text-[9px] uppercase tracking-[0.3em] text-[#E6D3AE]/70">{m.role}</p>
+                )}
+                <p className={`font-serif leading-snug ${group.members.length > 3 ? 'text-[15px]' : 'text-lg'}`}>{m.name}</p>
+              </div>
             ))}
           </div>
         </motion.section>

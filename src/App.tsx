@@ -143,7 +143,7 @@ export default function App() {
   }, []);
 
   const showDesktopSite = isDesktop && activeView !== 'sobre';
-  // "Kevin & Arlei , 12.14.2025" under the timeline title (mobile page and desktop section)
+  // "Kevin & Arlei , 02.02.2027" under the timeline title (mobile page and desktop section)
   const timelineCoupleLine = `${weddingData.groomNickname || weddingData.groom.split(' ')[0]} & ${
     weddingData.brideNickname || weddingData.bride.split(' ')[0]
   } , ${new Date(weddingData.weddingDate)

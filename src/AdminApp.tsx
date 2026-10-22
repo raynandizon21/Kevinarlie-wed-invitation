@@ -22,7 +22,7 @@ const PAGE_SIZES = [10, 25, 50, 100, 0];
 /** Plus-ones one RSVP may bring (same limit as the RSVP form and the server). */
 const MAX_GUESTS = 10;
 const inputClass =
-  'mt-1.5 w-full rounded-xl border border-stone-200 bg-white px-3.5 py-2.5 text-sm text-[#102F27] outline-none focus:border-[#185844] focus:ring-2 focus:ring-[#185844]/15';
+  'mt-1.5 w-full rounded-xl border border-[#185844]/15 bg-white px-3.5 py-2.5 text-sm text-[#102F27] outline-none focus:border-[#185844] focus:ring-2 focus:ring-[#185844]/15';
 
 /** Values in the Edit pop-up. */
 interface EditDraft {
@@ -105,7 +105,7 @@ const SearchBox: React.FC<{ value: string; onChange: (v: string) => void; placeh
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       aria-label={placeholder}
-      className="w-full rounded-full border border-stone-200 bg-white py-2 pl-10 pr-9 text-base text-[#102F27] outline-none placeholder:text-stone-400 focus:border-[#185844] focus:ring-2 focus:ring-[#185844]/15 sm:text-sm [&::-webkit-search-cancel-button]:hidden"
+      className="w-full rounded-full border border-[#185844]/15 bg-white py-2 pl-10 pr-9 text-base text-[#102F27] outline-none placeholder:text-stone-400 focus:border-[#185844] focus:ring-2 focus:ring-[#185844]/15 sm:text-sm [&::-webkit-search-cancel-button]:hidden"
     />
     {value && (
       <button
@@ -124,9 +124,9 @@ const SearchBox: React.FC<{ value: string; onChange: (v: string) => void; placeh
 const Pager: React.FC<{ pager: ReturnType<typeof usePager>; suffix?: string }> = ({ pager, suffix = '' }) => {
   const { page, setPage, pageSize, setPageSize, totalPages, total, start, end } = pager;
   const arrow =
-    'grid h-7 w-7 place-items-center rounded-full border border-stone-200 bg-white text-stone-700 disabled:opacity-40 hover:bg-[#F2EBDD] cursor-pointer';
+    'grid h-7 w-7 place-items-center rounded-full border border-[#185844]/15 bg-white text-stone-700 disabled:opacity-40 hover:bg-[#E9F1EC] cursor-pointer';
   return (
-    <div className="flex shrink-0 items-center justify-between gap-2 border-t border-stone-100 bg-[#F8F4EA]/70 px-3 py-2 sm:px-4">
+    <div className="flex shrink-0 items-center justify-between gap-2 border-t border-[#185844]/10 bg-[#F3F7F4] px-3 py-2 sm:px-4">
       <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-stone-500">
         Rows
         <RowsPicker value={pageSize} onChange={setPageSize} />
@@ -197,7 +197,7 @@ const RowsPicker: React.FC<{ value: number; onChange: (n: number) => void }> = (
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label="Rows per page"
-        className="flex items-center gap-1 rounded-full border border-stone-200 bg-white py-1 pl-2.5 pr-1.5 text-[11px] text-stone-700 tabular-nums hover:border-[#185844]/40 cursor-pointer"
+        className="flex items-center gap-1 rounded-full border border-[#185844]/15 bg-white py-1 pl-2.5 pr-1.5 text-[11px] text-stone-700 tabular-nums hover:border-[#185844]/40 cursor-pointer"
       >
         {value || 'All'}
         <ChevronDown className={`h-3 w-3 transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -208,7 +208,7 @@ const RowsPicker: React.FC<{ value: number; onChange: (n: number) => void }> = (
           {/* Opens upward: the pager sits at the bottom of the list */}
           <ul
             role="listbox"
-            className="absolute bottom-full left-0 z-[81] mb-1.5 w-20 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 shadow-[0_8px_30px_rgba(16,47,39,0.15)]"
+            className="absolute bottom-full left-0 z-[81] mb-1.5 w-20 overflow-hidden rounded-xl border border-[#185844]/15 bg-white py-1 shadow-[0_8px_30px_rgba(16,47,39,0.15)]"
           >
             {PAGE_SIZES.map((n) => (
               <li key={n}>
@@ -220,7 +220,7 @@ const RowsPicker: React.FC<{ value: number; onChange: (n: number) => void }> = (
                     onChange(n);
                     setOpen(false);
                   }}
-                  className={`flex w-full items-center justify-between px-3 py-1.5 text-left text-xs tabular-nums transition-colors cursor-pointer hover:bg-[#F2EBDD] ${
+                  className={`flex w-full items-center justify-between px-3 py-1.5 text-left text-xs tabular-nums transition-colors cursor-pointer hover:bg-[#E9F1EC] ${
                     n === value ? 'font-semibold text-[#185844]' : 'text-stone-700'
                   }`}
                 >
@@ -274,7 +274,7 @@ const RowMenu: React.FC<{ name: string; onEdit: () => void; onDelete: () => void
         aria-label={`Actions for ${name}`}
         aria-haspopup="menu"
         aria-expanded={!!pos}
-        className={`rounded-full p-1.5 transition-colors cursor-pointer ${pos ? 'bg-[#F2EBDD] text-[#102F27]' : 'text-stone-400 hover:bg-[#F2EBDD] hover:text-[#102F27]'}`}
+        className={`rounded-full p-1.5 transition-colors cursor-pointer ${pos ? 'bg-[#E9F1EC] text-[#102F27]' : 'text-stone-400 hover:bg-[#E9F1EC] hover:text-[#102F27]'}`}
       >
         <MoreVertical className="h-4 w-4" />
       </button>
@@ -284,7 +284,7 @@ const RowMenu: React.FC<{ name: string; onEdit: () => void; onDelete: () => void
           <div
             role="menu"
             style={pos}
-            className="fixed z-[81] w-36 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 shadow-[0_8px_30px_rgba(16,47,39,0.15)]"
+            className="fixed z-[81] w-36 overflow-hidden rounded-xl border border-[#185844]/15 bg-white py-1 shadow-[0_8px_30px_rgba(16,47,39,0.15)]"
           >
             <button
               type="button"
@@ -294,7 +294,7 @@ const RowMenu: React.FC<{ name: string; onEdit: () => void; onDelete: () => void
                 setPos(null);
                 onEdit();
               }}
-              className={`${item} text-[#102F27] hover:bg-[#F2EBDD]`}
+              className={`${item} text-[#102F27] hover:bg-[#E9F1EC]`}
             >
               <Pencil className="h-3.5 w-3.5" /> Edit
             </button>
@@ -562,7 +562,7 @@ export default function AdminApp() {
       gold: 'hover:border-[#B08A4F]/50',
       plain: 'hover:border-[#102F27]/30',
     };
-    const look = active ? selected[tone] : `border-stone-200 bg-white ${onClick ? hover[tone] : ''}`;
+    const look = active ? selected[tone] : `border-[#185844]/15 bg-white ${onClick ? hover[tone] : ''}`;
     const Tag = onClick ? 'button' : 'div';
     return (
       <Tag
@@ -582,7 +582,7 @@ export default function AdminApp() {
 
   return (
     // Fits the screen exactly on any device: header, stats and pager stay put, only the list scrolls
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-[#F2EBDD] text-[#102F27] font-sans">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-white text-[#102F27] font-sans">
       <main className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-3 px-[clamp(0.75rem,4vw,1.5rem)] py-3 sm:gap-4 sm:py-5">
         <div className="flex shrink-0 items-center justify-between gap-3">
           <h2 className="font-serif text-[clamp(1.4rem,5vw,2.25rem)] leading-none">Guest RSVPs</h2>
@@ -592,7 +592,7 @@ export default function AdminApp() {
               setArchiveOpen(true);
               fetchArchived();
             }}
-            className="inline-flex items-center gap-2 rounded-full border border-[#102F27]/15 bg-white/60 px-3.5 py-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest text-[#185844] hover:bg-white transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 rounded-full border border-[#185844]/30 bg-white px-3.5 py-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest text-[#185844] hover:bg-[#185844] hover:text-white transition-colors cursor-pointer"
           >
             <Archive className="h-4 w-4" aria-hidden />
             <span>Archive</span>
@@ -612,23 +612,23 @@ export default function AdminApp() {
         </div>
 
         {/* List */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-[0_8px_30px_rgba(16,47,39,0.06)]">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#185844]/15 bg-white shadow-[0_8px_30px_rgba(16,47,39,0.06)]">
           {/* Desktop table */}
           {/* Only the rows scroll; the column header stays pinned */}
           <div className={`hidden min-h-0 overflow-auto sm:block ${listLength ? 'flex-1' : ''}`}>
             <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="sticky top-0 z-10 bg-[#F8F4EA] shadow-[inset_0_-1px_0_#e7e5e4]">
+              <thead className="sticky top-0 z-10 bg-[#E9F1EC] shadow-[inset_0_-1px_0_rgba(24,88,68,0.18)]">
                 <tr>
                   {(isPlusView ? ['Guest', 'Brought by', 'Contact', 'Date'] : ['Name', 'Status', 'Plus-one', 'Contact', 'Date', '']).map((h) => (
-                    <th key={h} className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-stone-600">
+                    <th key={h} className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[#185844]">
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100">
+              <tbody className="divide-y divide-[#185844]/10">
                 {displayedPlusOnes.map(({ key, guest, host }) => (
-                  <tr key={key} className="hover:bg-[#F8F4EA]/60 transition-colors">
+                  <tr key={key} className="hover:bg-[#185844]/[0.04] transition-colors">
                     <td className="px-4 py-2.5 font-medium text-[#102F27] whitespace-normal">{guest}</td>
                     <td className="px-4 py-2.5 text-stone-700">{host.name}</td>
                     <td className="px-4 py-2.5 font-mono text-stone-500">{formatContact(host.contact)}</td>
@@ -636,7 +636,7 @@ export default function AdminApp() {
                   </tr>
                 ))}
                 {displayedRsvps.map((g) => (
-                  <tr key={g.id} className="hover:bg-[#F8F4EA]/60 transition-colors">
+                  <tr key={g.id} className="hover:bg-[#185844]/[0.04] transition-colors">
                     <td className="px-4 py-2.5 font-medium text-[#102F27]">{g.name}</td>
                     <td className="px-4 py-2.5"><StatusBadge attending={g.isAttending === 'yes'} /></td>
                     <td className="px-4 py-2.5 text-xs text-stone-600 whitespace-normal max-w-[12rem]">{formatPlusOneGuest(g)}</td>
@@ -654,7 +654,7 @@ export default function AdminApp() {
           </div>
 
           {/* Mobile cards */}
-          <div className={`min-h-0 overflow-y-auto divide-y divide-stone-100 sm:hidden ${listLength ? 'flex-1' : ''}`}>
+          <div className={`min-h-0 overflow-y-auto divide-y divide-[#185844]/10 sm:hidden ${listLength ? 'flex-1' : ''}`}>
             {displayedPlusOnes.map(({ key, guest, host }) => (
               <div key={key} className="px-4 py-3">
                 <p className="text-sm font-medium leading-tight">{guest}</p>
@@ -703,7 +703,7 @@ export default function AdminApp() {
               role="dialog"
               aria-modal="true"
               aria-labelledby="archive-title"
-              className="flex h-[100dvh] w-full max-w-5xl transform-gpu flex-col overflow-hidden sm:h-[85dvh] sm:rounded-3xl bg-[#F2EBDD] shadow-2xl"
+              className="flex h-[100dvh] w-full max-w-5xl transform-gpu flex-col overflow-hidden sm:h-[85dvh] sm:rounded-3xl bg-white shadow-2xl"
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 24 }}
@@ -747,7 +747,7 @@ export default function AdminApp() {
                         aria-pressed={active}
                         onClick={() => setArchiveFilter(key)}
                         className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors cursor-pointer ${
-                          active ? on : 'border-stone-200 bg-white text-stone-600 hover:border-[#102F27]/30'
+                          active ? on : 'border-[#185844]/15 bg-white text-stone-600 hover:border-[#102F27]/30'
                         }`}
                       >
                         {label}
@@ -759,21 +759,21 @@ export default function AdminApp() {
               </div>
 
               {/* Same layout as the main list: table on wider screens, cards on phones */}
-              <div className="mx-[clamp(0.75rem,4vw,1.5rem)] mb-[max(0.75rem,env(safe-area-inset-bottom))] flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-[0_8px_30px_rgba(16,47,39,0.06)] sm:mb-5">
+              <div className="mx-[clamp(0.75rem,4vw,1.5rem)] mb-[max(0.75rem,env(safe-area-inset-bottom))] flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#185844]/15 bg-white shadow-[0_8px_30px_rgba(16,47,39,0.06)] sm:mb-5">
                 <div className={`hidden min-h-0 overflow-auto sm:block ${filteredArchived.length ? 'flex-1' : ''}`}>
                   <table className="w-full text-left text-sm whitespace-nowrap">
-                    <thead className="sticky top-0 z-10 bg-[#F8F4EA] shadow-[inset_0_-1px_0_#e7e5e4]">
+                    <thead className="sticky top-0 z-10 bg-[#E9F1EC] shadow-[inset_0_-1px_0_rgba(24,88,68,0.18)]">
                       <tr>
                         {['Name', 'Status', 'Plus-one', 'Contact', 'Date', ''].map((h) => (
-                          <th key={h} className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-stone-600">
+                          <th key={h} className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[#185844]">
                             {h}
                           </th>
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-stone-100">
+                    <tbody className="divide-y divide-[#185844]/10">
                       {displayedArchived.map((g) => (
-                        <tr key={g.id} className="hover:bg-[#F8F4EA]/60 transition-colors">
+                        <tr key={g.id} className="hover:bg-[#185844]/[0.04] transition-colors">
                           <td className="px-4 py-2.5 font-medium text-[#102F27]">{g.name}</td>
                           <td className="px-4 py-2.5"><StatusBadge attending={g.isAttending === 'yes'} /></td>
                           <td className="px-4 py-2.5 text-xs text-stone-600 whitespace-normal max-w-[12rem]">{formatPlusOneGuest(g)}</td>
@@ -788,7 +788,7 @@ export default function AdminApp() {
                   </table>
                 </div>
 
-                <div className={`min-h-0 overflow-y-auto divide-y divide-stone-100 sm:hidden ${filteredArchived.length ? 'flex-1' : ''}`}>
+                <div className={`min-h-0 overflow-y-auto divide-y divide-[#185844]/10 sm:hidden ${filteredArchived.length ? 'flex-1' : ''}`}>
                   {displayedArchived.map((g) => (
                     <div key={g.id} className="flex items-start justify-between gap-2 px-4 py-3">
                       <div className="min-w-0 flex-1">
@@ -902,7 +902,7 @@ export default function AdminApp() {
                               ? v === 'yes'
                                 ? 'border-[#185844] bg-[#185844] text-white'
                                 : 'border-[#9B2C2C] bg-[#9B2C2C] text-white'
-                              : 'border-stone-200 text-stone-600 hover:bg-[#F2EBDD]'
+                              : 'border-[#185844]/15 text-stone-600 hover:bg-[#E9F1EC]'
                           }`}
                         >
                           {v === 'yes' ? 'Attending' : 'Declined'}
@@ -958,7 +958,7 @@ export default function AdminApp() {
                   type="button"
                   onClick={() => setEditDraft(null)}
                   disabled={saving}
-                  className="rounded-full border border-stone-200 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-600 hover:bg-[#F2EBDD] disabled:opacity-50 transition-colors cursor-pointer"
+                  className="rounded-full border border-[#185844]/15 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-600 hover:bg-[#E9F1EC] disabled:opacity-50 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1013,7 +1013,7 @@ export default function AdminApp() {
                   autoFocus
                   onClick={() => setPendingDelete(null)}
                   disabled={deleting}
-                  className="rounded-full border border-stone-200 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-600 hover:bg-[#F2EBDD] disabled:opacity-50 transition-colors cursor-pointer"
+                  className="rounded-full border border-[#185844]/15 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-600 hover:bg-[#E9F1EC] disabled:opacity-50 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>

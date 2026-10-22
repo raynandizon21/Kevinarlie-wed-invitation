@@ -9,13 +9,13 @@ import meadowCoupleImg from '../assets/images/wedding_couple_meadow_179160291453
 export const MobileHero: React.FC<{
   groomName: string;
   brideName: string;
-  /** e.g. "Sunday, December 14, 2025" */
+  /** e.g. "Tuesday, February 2, 2027" */
   displayDate: string;
-  /** e.g. "2:30 PM" */
+  /** e.g. "3:00 PM" */
   time: string;
   onContinue: () => void;
 }> = ({ groomName, brideName, displayDate, time, onContinue }) => {
-  // "Sunday, December 14, 2025" -> Sunday / December / 14 / 2025
+  // "Tuesday, February 2, 2027" -> Tuesday / February / 2 / 2027
   const m = displayDate.match(/^\s*(\w+),\s*(\w+)\s+(\d{1,2}),?\s*(\d{4})/);
   return (
   <motion.div

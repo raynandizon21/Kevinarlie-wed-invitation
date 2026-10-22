@@ -19,7 +19,7 @@ import tablescapeImg from '../assets/images/wedding_tablescape_candlelight_singl
 export type PhotoLayout = 'ivory' | 'sage' | 'forest';
 export const STORY_PHOTOS: { src: string; caption: string; layout: PhotoLayout; position?: string }[] = [
   { src: jardinVenueImg, caption: 'Our love story', layout: 'ivory' },
-  { src: tablescapeImg, caption: 'Soon to be wed', layout: 'sage' },
+  { src: tablescapeImg, caption: 'Two hearts, one love', layout: 'sage' },
   { src: meadowCoupleImg, caption: 'Counting down to forever', layout: 'forest', position: '60% center' },
 ];
 const PAGE_BG: Record<PhotoLayout, string> = {
@@ -125,7 +125,7 @@ export const PhotoPage: React.FC<{
         <div className={`${page} items-center px-[clamp(1.5rem,8vw,2.25rem)] text-center`}>
           <motion.div {...fadeUp(0.3)}>
             <div className="flex justify-center">{namesLine}</div>
-            <p className="mt-3 font-['Parisienne'] text-[clamp(2.8rem,14vw,3.6rem)] leading-[1.05] text-white">{slide.caption}</p>
+            <p className="mt-3 text-balance font-['Parisienne'] text-[clamp(2.8rem,14vw,3.6rem)] leading-[1.05] text-white">{slide.caption}</p>
           </motion.div>
           {/* Photo centered, ivory outline all around it */}
           <motion.div

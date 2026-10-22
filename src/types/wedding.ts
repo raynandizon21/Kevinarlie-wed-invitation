@@ -22,7 +22,7 @@ export interface TimelineItem {
   title: string;
   location: string;
   description: string;
-  icon: 'rings' | 'camera' | 'dinner' | 'cake' | 'dance' | 'buffet' | 'fireworks' | 'carriage' | 'church' | 'cocktail' | 'party';
+  icon: 'rings' | 'camera' | 'dinner' | 'cake' | 'dance' | 'buffet' | 'fireworks' | 'carriage' | 'church' | 'cocktail' | 'party' | 'assembly';
 }
 
 export interface EntourageMember {
@@ -32,6 +32,8 @@ export interface EntourageMember {
 
 export interface EntourageCategory {
   category: string;
+  /** Show each member's role above the name (roles differ within the group) */
+  showRoles?: boolean;
   members: EntourageMember[];
 }
 

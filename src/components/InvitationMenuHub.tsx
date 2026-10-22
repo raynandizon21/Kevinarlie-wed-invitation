@@ -118,18 +118,18 @@ export const InvitationMenuHub: React.FC<InvitationMenuHubProps> = ({
               {/* Top divider line */}
               <div className="w-10/12 mx-auto border-t border-stone-300 my-0.5" />
 
-              {/* SUNDAY */}
+              {/* TUESDAY */}
               <div className="text-[7px] sm:text-[8px] uppercase tracking-[0.22em] font-sans font-medium text-stone-500">
-                SUNDAY
+                TUESDAY
               </div>
 
-              {/* DECEMBER | 14 | 2025 */}
+              {/* FEBRUARY | 2 | 2027 */}
               <div className="font-serif text-[9px] sm:text-xs font-bold text-[#102F27] tracking-wider my-0.5 flex items-center justify-center gap-1">
-                <span>DECEMBER</span>
+                <span>FEBRUARY</span>
                 <span className="text-[#185844] text-xs sm:text-sm font-extrabold px-1 border-x border-stone-300">
-                  14
+                  2
                 </span>
-                <span>2025</span>
+                <span>2027</span>
               </div>
 
               {/* Bottom divider line */}

@@ -6,6 +6,7 @@ import { DRESS_CODE, FaqAccordion, RsvpForm, TimelineIcon } from './SubPages';
 import { DesktopPhotoBand, ThanksPage } from './GalleryPages';
 import { Sprig } from './Sprig';
 import jardinVenueImg from '../assets/images/jardin_venue_1791676573787.jpg';
+import churchImg from '../assets/images/CHRURCH.jpg';
 import meadowCoupleImg from '../assets/images/wedding_couple_meadow_1791602914531.jpg';
 // Left half of the original two-photo image, so there's no seam line down the middle
 import tablescapeImg from '../assets/images/wedding_tablescape_candlelight_single.jpg';
@@ -83,7 +84,7 @@ interface DesktopSiteProps {
   mapsReceptionUrl: string;
   rsvpDeadline: string;
   timeline: TimelineItem[];
-  /** "Kevin & Arlei , 12.14.2025" line under the timeline title (same as mobile) */
+  /** "Kevin & Arlei , 02.02.2027" line under the timeline title (same as mobile) */
   timelineCoupleLine: string;
   entourage: EntourageCategory[];
 }
@@ -136,7 +137,7 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
   const navLink = 'py-2 hover:opacity-70 transition-opacity cursor-pointer';
 
   const venues = [
-    { label: 'Ceremony', name: churchName, address: churchAddress, time: ceremonyTime, img: jardinVenueImg, url: mapsChurchUrl },
+    { label: 'Ceremony', name: churchName, address: churchAddress, time: ceremonyTime, img: churchImg, url: mapsChurchUrl },
     { label: 'Reception', name: receptionName, address: receptionAddress, img: tablescapeImg, url: mapsReceptionUrl },
   ];
 
@@ -398,13 +399,20 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
                 </h3>
                 <div
                   className={`mx-auto mt-5 grid gap-y-2 ${
-                    group.members.length > 3 ? 'max-w-2xl grid-cols-2 gap-x-14' : 'grid-cols-1'
+                    group.members.length > 3 ? 'max-w-2xl grid-cols-2 gap-x-10' : 'grid-cols-1'
                   }`}
                 >
-                  {group.members.map((m) => (
-                    <p key={`${m.role}-${m.name}`} className="font-serif text-2xl leading-snug text-[#102F27]">
-                      {m.name}
-                    </p>
+                  {/* Two columns meet at the centre: left column right-aligned, right column left-aligned */}
+                  {group.members.map((m, i) => (
+                    <div
+                      key={`${m.role}-${m.name}`}
+                      className={`${group.showRoles ? 'pt-2' : ''} ${group.members.length > 3 ? (i % 2 ? 'text-left' : 'text-right') : ''}`}
+                    >
+                      {group.showRoles && (
+                        <p className="text-[10px] uppercase tracking-[0.3em] text-[#78947F]">{m.role}</p>
+                      )}
+                      <p className="font-serif text-2xl leading-snug text-[#102F27]">{m.name}</p>
+                    </div>
                   ))}
                 </div>
               </motion.div>
