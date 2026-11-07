@@ -16,7 +16,10 @@ function adminCleanUrl(): Plugin {
       res.setHeader('Location', req.url.replace(/^\/admin\.html/, '/admin'));
       return res.end();
     }
-    if (req.url === '/admin' || req.url === '/admin/' || req.url?.startsWith('/admin?')) {
+    const adminOnly = process.env.ADMIN_ONLY === 'true';
+    if (adminOnly && (req.url === '/' || req.url?.startsWith('/?'))) {
+      req.url = req.url.replace(/^\//, '/admin.html');
+    } else if (req.url === '/admin' || req.url === '/admin/' || req.url?.startsWith('/admin?')) {
       req.url = req.url.replace(/^\/admin\/?/, '/admin.html');
     }
     next();

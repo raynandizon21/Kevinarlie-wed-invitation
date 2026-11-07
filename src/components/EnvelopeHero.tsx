@@ -34,6 +34,8 @@ export const EnvelopeHero: React.FC<EnvelopeHeroProps> = ({
     } catch {
       // Audio fallback
     }
+    // Started inside the tap itself: mobile browsers block music started after the delay below
+    melodyPlayer.start();
 
     // Smooth cinematic fade out transition to menu page
     setTimeout(() => {

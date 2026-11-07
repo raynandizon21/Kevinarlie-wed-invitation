@@ -339,6 +339,8 @@ export const ENTOURAGE_DATA: EntourageCategory[] = [
       { role: 'Bridesmaid', name: 'Cristine Pasion' },
       { role: 'Groomsman', name: 'Dustine Mayos' },
       { role: 'Bridesmaid', name: 'Melaine Ordono' },
+      { role: 'Groomsman', name: 'Alaine Gonzales' },
+      { role: 'Bridesmaid', name: 'Keisha Layug' },
     ],
   },
   {
