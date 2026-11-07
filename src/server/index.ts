@@ -31,7 +31,7 @@ app.get('/api/rsvps', async (_req, res) => {
 // Guests a single RSVP may bring (keep in sync with MAX_GUESTS in SubPages.tsx)
 const MAX_GUEST_NAMES = 10;
 const MAX_GUEST_NAME_LEN = 120;
-// One person per guest name (keep in sync with MULTI_NAME in SubPages.tsx)
+// One person per guest name (the site has no plus-ones now; only used if a client still sends bringsGuest)
 const MULTI_NAME = /[\/&+]|\band\b|,(?!\s*(?:jr|sr|ii|iii|iv)\.?\s*$)/i;
 
 type GuestFields = { brings_guest: string | null; guest_names: string | null } | { error: string };
@@ -70,7 +70,7 @@ app.post('/api/rsvps', async (req, res) => {
   let brings_guest: string | null = null;
   let guest_names: string | null = null;
 
-  if (isAttending === 'yes' && (bringsGuest !== undefined || sourceValue === 'qr')) {
+  if (isAttending === 'yes' && bringsGuest !== undefined) {
     const guests = readGuests(bringsGuest, guestNames);
     if ('error' in guests) return res.status(400).json({ error: guests.error });
     ({ brings_guest, guest_names } = guests);
@@ -106,7 +106,7 @@ app.patch('/api/rsvps/:id', async (req, res) => {
 
   let brings_guest: string | null = null;
   let guest_names: string | null = null;
-  if (isAttending === 'yes') {
+  if (isAttending === 'yes' && bringsGuest !== undefined) {
     const guests = readGuests(bringsGuest, guestNames);
     if ('error' in guests) return res.status(400).json({ error: guests.error });
     ({ brings_guest, guest_names } = guests);

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently -n web,api -c green,yellow \"npm:dev:web\" \"npm:dev:server\"",
-    "dev:web": "vite --port=3213 --host=0.0.0.0",
+    "dev:web": "vite --port=2213 --host=0.0.0.0",
     "dev:server": "tsx watch src/server/index.ts",
     "build": "vite build",
     "preview": "vite preview",

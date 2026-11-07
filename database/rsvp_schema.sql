@@ -1,8 +1,8 @@
 -- RSVP storage for the Kevin & Arlei invitation (same shape as the wedding-invitation project).
 -- Run once, e.g. in phpMyAdmin or: mysql -u root < database/rsvp_schema.sql
 
-CREATE DATABASE IF NOT EXISTS kevinarlei_rsvp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE kevinarlei_rsvp;
+CREATE DATABASE IF NOT EXISTS rsvp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE rsvp;
 
 CREATE TABLE IF NOT EXISTS rsvps (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,

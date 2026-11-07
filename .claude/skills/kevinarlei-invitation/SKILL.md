@@ -64,14 +64,13 @@ expecting a visible change.
 
 ## RSVP data
 
-- Database `kevinarlei_rsvp` (`DB_NAME` in `.env`; the code falls back to `rsvp`, the separate `wedding-invitation`
-  project's database), table `rsvps`. Never drop, rename or rewrite existing columns/rows; only add.
+- Database `rsvp` (`DB_NAME` in `.env`), table `rsvps`. The separate `wedding-invitation` project also uses `rsvp`,
+  so don't run both against the same MySQL. Never drop, rename or rewrite existing columns/rows; only add.
 - Columns: `id, name, contact, isAttending ('yes'|'no'), timestamp, source ('web'|'qr'), brings_guest, guest_names (JSON array), active (1 = active, 0 = soft deleted)`.
 - **Soft delete only**: `DELETE /api/rsvps/:id` sets `active = 0`; `GET /api/rsvps` returns `active = 1`;
   `GET /api/rsvps/archived` + `PATCH /api/rsvps/:id/restore` power the admin Archive.
-- Plus-ones: anyone attending can add 1–10 guests, one person per field. `MULTI_NAME` (kept identical in
-  `SubPages.tsx` and `server/index.ts`) rejects `/ & + , and` but allows `, Jr.` / `, III`.
-  The admin also splits old combined names for display only — don't "fix" them in the DB.
+- No plus-ones: the RSVP form and admin don't ask for or show guests. `brings_guest` / `guest_names` stay in the table
+  (null for new RSVPs); the server still validates them only if a client sends `bringsGuest`.
 - Socket.IO events from the server: `rsvp:new`, `rsvp:deleted`, `rsvp:restored`. Emit one whenever the API changes rows.
 
 ## Testing changes
@@ -79,7 +78,7 @@ expecting a visible change.
 - Screenshot with headless Edge via `puppeteer-core` (Edge path `C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe`);
   tap the envelope first (look for the text `TAP TO OPEN`).
 - Any test RSVP must be named `TEST …` and deleted afterwards:
-  `DELETE FROM kevinarlei_rsvp.rsvps WHERE name LIKE 'TEST %';` (via `C:/xampp/mysql/bin/mysql.exe -u root`).
+  `DELETE FROM rsvp.rsvps WHERE name LIKE 'TEST %';` (via `C:/xampp/mysql/bin/mysql.exe -u root`).
 - Stop any test server you start (by PID) so it never holds port 3002.
 
 ## Not done yet

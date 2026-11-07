@@ -28,14 +28,8 @@ export const EnvelopeHero: React.FC<EnvelopeHeroProps> = ({
 
     setIsTransitioning(true);
 
-    // Play sparkling chime sound effect
-    try {
-      melodyPlayer.playOpenEnvelopeSound();
-    } catch {
-      // Audio fallback
-    }
-    // Started inside the tap itself: mobile browsers block music started after the delay below
-    melodyPlayer.start();
+    // Music starts once the main page shows; unlocking it inside the tap keeps mobile browsers from blocking it
+    melodyPlayer.unlock();
 
     // Smooth cinematic fade out transition to menu page
     setTimeout(() => {

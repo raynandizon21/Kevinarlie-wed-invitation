@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Archive, Check, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, Plus, RotateCcw, Search, Trash2, X } from 'lucide-react';
+import { Archive, Check, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, RotateCcw, Search, Trash2, X } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 // RSVP admin panel (ported from the wedding-invitation project, Kevin & Arlei colors)
@@ -12,15 +12,11 @@ interface RsvpRow {
   isAttending: 'yes' | 'no';
   timestamp: string;
   source?: 'web' | 'qr';
-  brings_guest?: 'yes' | 'no' | null;
-  guest_names?: unknown;
 }
 
 /** Guests per page. */
 // 0 = All (one page with every row)
 const PAGE_SIZES = [10, 25, 50, 100, 0];
-/** Plus-ones one RSVP may bring (same limit as the RSVP form and the server). */
-const MAX_GUESTS = 10;
 const inputClass =
   'mt-1.5 w-full rounded-xl border border-[#185844]/15 bg-white px-3.5 py-2.5 text-sm text-[#102F27] outline-none focus:border-[#185844] focus:ring-2 focus:ring-[#185844]/15';
 
@@ -30,38 +26,9 @@ interface EditDraft {
   name: string;
   contact: string;
   isAttending: 'yes' | 'no';
-  guests: string[];
 }
 
-// 'plus' = attending RSVPs that bring at least one guest
-type StatusFilter = 'all' | 'yes' | 'no' | 'plus';
-
-
-// Older RSVPs typed several people in one field ("Ana/Ben", "Ana & Ben"): split those into separate guests
-const splitTypedNames = (name: string) => name.split(/\s*(?:\/|&)\s*/).map((n) => n.trim()).filter(Boolean);
-
-function parseGuestNames(raw: unknown): string[] {
-  let list: unknown[] = [];
-  if (Array.isArray(raw)) {
-    list = raw;
-  } else if (typeof raw === 'string') {
-    try {
-      const p = JSON.parse(raw) as unknown;
-      if (Array.isArray(p)) list = p;
-    } catch {
-      return [];
-    }
-  }
-  return list.flatMap((s) => splitTypedNames(String(s)));
-}
-
-// Plus-ones for any RSVP (guests and sponsors alike), comma-separated
-function formatPlusOneGuest(g: RsvpRow): string {
-  if (g.brings_guest === 'no') return 'No guest';
-  if (g.brings_guest !== 'yes') return '—';
-  const names = parseGuestNames(g.guest_names);
-  return names.length ? names.join(', ') : '—';
-}
+type StatusFilter = 'all' | 'yes' | 'no';
 
 // Normalize common PH input like 09xx... to +63 9xx...
 function formatContact(raw: unknown): string {
@@ -73,12 +40,11 @@ function formatContact(raw: unknown): string {
   return `+63${digits}`;
 }
 
-// Search: name, plus-one names or contact number (09… and +639… both match)
+// Search: name or contact number (09… and +639… both match)
 function matchesQuery(g: RsvpRow, q: string): boolean {
   const s = q.trim().toLowerCase();
   if (!s) return true;
   if (g.name.toLowerCase().includes(s)) return true;
-  if (parseGuestNames(g.guest_names).some((n) => n.toLowerCase().includes(s))) return true;
   const digits = s.replace(/\D/g, '').replace(/^0/, '');
   return digits.length >= 3 && formatContact(g.contact).replace(/\D/g, '').includes(digits);
 }
@@ -337,14 +303,8 @@ export default function AdminApp() {
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState('');
 
-  const attendingRsvpCount = rsvps.filter((g) => g.isAttending === 'yes').length;
+  const attendingCount = rsvps.filter((g) => g.isAttending === 'yes').length;
   const declinedCount = rsvps.filter((g) => g.isAttending === 'no').length;
-  /** Total plus-one guests named by attending RSVPs. */
-  const plusOneCount = rsvps
-    .filter((g) => g.isAttending === 'yes' && g.brings_guest === 'yes')
-    .reduce((sum, g) => sum + parseGuestNames(g.guest_names).length, 0);
-  /** Headcount: everyone attending, plus-ones included. */
-  const attendingCount = attendingRsvpCount + plusOneCount;
 
   // Soft delete (sets active = 0 on the server; the row stays in the database)
   const confirmDelete = async () => {
@@ -372,18 +332,13 @@ export default function AdminApp() {
       name: g.name,
       contact: g.contact ?? '',
       isAttending: g.isAttending,
-      guests: parseGuestNames(g.guest_names),
     });
   };
-
-  const updateGuest = (i: number, value: string) =>
-    setEditDraft((d) => (d ? { ...d, guests: d.guests.map((n, j) => (j === i ? value : n)) } : d));
 
   const saveEdit = async () => {
     const d = editDraft;
     if (!d) return;
     if (!d.name.trim()) return setEditError('Please enter a name.');
-    const guests = d.isAttending === 'yes' ? d.guests.map((n) => n.trim()).filter(Boolean) : [];
     try {
       setSaving(true);
       setEditError('');
@@ -394,8 +349,6 @@ export default function AdminApp() {
           name: d.name,
           contact: d.contact,
           isAttending: d.isAttending,
-          bringsGuest: guests.length ? 'yes' : 'no',
-          guestNames: guests,
         }),
       });
       const data = await response.json().catch(() => ({}));
@@ -508,29 +461,13 @@ export default function AdminApp() {
     };
   }, []);
 
-  const isPlusView = statusFilter === 'plus';
-  const filteredRsvps = rsvps.filter((g) => {
-    if (statusFilter === 'plus') {
-      if (!(g.isAttending === 'yes' && g.brings_guest === 'yes' && parseGuestNames(g.guest_names).length > 0)) return false;
-    } else if (statusFilter !== 'all' && g.isAttending !== statusFilter) return false;
-    // In the plus-ones view the search runs per guest below
-    return isPlusView || matchesQuery(g, query);
-  });
-
-  // Plus-ones view: one row per guest name from guest_names, with the RSVP that brought them
-  const q = query.trim().toLowerCase();
-  const plusOneRows = isPlusView
-    ? filteredRsvps.flatMap((host) =>
-        parseGuestNames(host.guest_names)
-          .map((guest, i) => ({ key: `${host.id}-${i}`, guest, host }))
-          .filter(({ guest }) => !q || guest.toLowerCase().includes(q) || matchesQuery({ ...host, guest_names: null }, q))
-      )
-    : [];
-  const listLength = isPlusView ? plusOneRows.length : filteredRsvps.length;
+  const filteredRsvps = rsvps.filter(
+    (g) => (statusFilter === 'all' || g.isAttending === statusFilter) && matchesQuery(g, query)
+  );
+  const listLength = filteredRsvps.length;
 
   const pager = usePager(listLength, `${statusFilter}|${query}`);
-  const displayedRsvps = isPlusView ? [] : filteredRsvps.slice(pager.start, pager.end);
-  const displayedPlusOnes = plusOneRows.slice(pager.start, pager.end);
+  const displayedRsvps = filteredRsvps.slice(pager.start, pager.end);
 
   const filteredArchived = archived.filter(
     (g) => (archiveFilter === 'all' || g.isAttending === archiveFilter) && matchesQuery(g, archiveQuery)
@@ -600,15 +537,14 @@ export default function AdminApp() {
         </div>
 
         {/* Stats / filters */}
-        <div className="grid shrink-0 grid-cols-4 gap-2 sm:gap-3">
+        <div className="grid shrink-0 grid-cols-3 gap-2 sm:gap-3">
           {statCard('Total RSVP', rsvps.length, statusFilter === 'all', () => setStatusFilter('all'))}
-          {statCard('Attending', attendingCount, statusFilter === 'yes', () => setStatusFilter((f) => (f === 'yes' ? 'all' : 'yes')), 'green', `${attendingRsvpCount} RSVP + ${plusOneCount} plus-one${plusOneCount === 1 ? '' : 's'}`)}
+          {statCard('Attending', attendingCount, statusFilter === 'yes', () => setStatusFilter((f) => (f === 'yes' ? 'all' : 'yes')), 'green')}
           {statCard('Declined', declinedCount, statusFilter === 'no', () => setStatusFilter((f) => (f === 'no' ? 'all' : 'no')), 'red')}
-          {statCard('Plus-ones', plusOneCount, statusFilter === 'plus', () => setStatusFilter((f) => (f === 'plus' ? 'all' : 'plus')), 'gold')}
         </div>
 
         <div className="shrink-0">
-          <SearchBox value={query} onChange={setQuery} placeholder="Search name, plus-one or contact" />
+          <SearchBox value={query} onChange={setQuery} placeholder="Search name or contact" />
         </div>
 
         {/* List */}
@@ -619,7 +555,7 @@ export default function AdminApp() {
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="sticky top-0 z-10 bg-[#E9F1EC] shadow-[inset_0_-1px_0_rgba(24,88,68,0.18)]">
                 <tr>
-                  {(isPlusView ? ['Guest', 'Brought by', 'Contact', 'Date'] : ['Name', 'Status', 'Plus-one', 'Contact', 'Date', '']).map((h) => (
+                  {['Name', 'Status', 'Contact', 'Date', ''].map((h) => (
                     <th key={h} className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[#185844]">
                       {h}
                     </th>
@@ -627,19 +563,10 @@ export default function AdminApp() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#185844]/10">
-                {displayedPlusOnes.map(({ key, guest, host }) => (
-                  <tr key={key} className="hover:bg-[#185844]/[0.04] transition-colors">
-                    <td className="px-4 py-2.5 font-medium text-[#102F27] whitespace-normal">{guest}</td>
-                    <td className="px-4 py-2.5 text-stone-700">{host.name}</td>
-                    <td className="px-4 py-2.5 font-mono text-stone-500">{formatContact(host.contact)}</td>
-                    <td className="px-4 py-2.5 text-xs text-stone-500">{formatDate(host.timestamp)}</td>
-                  </tr>
-                ))}
                 {displayedRsvps.map((g) => (
                   <tr key={g.id} className="hover:bg-[#185844]/[0.04] transition-colors">
                     <td className="px-4 py-2.5 font-medium text-[#102F27]">{g.name}</td>
                     <td className="px-4 py-2.5"><StatusBadge attending={g.isAttending === 'yes'} /></td>
-                    <td className="px-4 py-2.5 text-xs text-stone-600 whitespace-normal max-w-[12rem]">{formatPlusOneGuest(g)}</td>
                     <td className="px-4 py-2.5 font-mono text-stone-500">{formatContact(g.contact)}</td>
                     <td className="px-4 py-2.5 text-xs text-stone-500">
                       {formatDate(g.timestamp)}
@@ -655,17 +582,10 @@ export default function AdminApp() {
 
           {/* Mobile cards */}
           <div className={`min-h-0 overflow-y-auto divide-y divide-[#185844]/10 sm:hidden ${listLength ? 'flex-1' : ''}`}>
-            {displayedPlusOnes.map(({ key, guest, host }) => (
-              <div key={key} className="px-4 py-3">
-                <p className="text-sm font-medium leading-tight">{guest}</p>
-                <p className="mt-0.5 text-[10px] text-stone-500">Brought by {host.name}</p>
-              </div>
-            ))}
             {displayedRsvps.map((g) => (
               <div key={g.id} className="flex items-start justify-between gap-2 px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium leading-tight">{g.name}</p>
-                  {g.brings_guest === 'yes' && <p className="mt-0.5 text-[10px] text-stone-500">Plus-one: {formatPlusOneGuest(g)}</p>}
                   <p className="mt-0.5 font-mono text-xs text-stone-500">{formatContact(g.contact)}</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
@@ -684,7 +604,7 @@ export default function AdminApp() {
             <p className="grid flex-1 place-items-center px-4 py-8 text-center text-xs uppercase tracking-widest text-stone-500">{query.trim() ? `No results for “${query.trim()}”.` : 'No guests match this filter.'}</p>
           )}
 
-          {rsvps.length > 0 && <Pager pager={pager} suffix={isPlusView ? ' plus-ones' : ''} />}
+          {rsvps.length > 0 && <Pager pager={pager} />}
         </div>
       </main>
 
@@ -728,7 +648,7 @@ export default function AdminApp() {
               </div>
 
               <div className="shrink-0 px-[clamp(1rem,4vw,1.5rem)] pb-3">
-                <SearchBox value={archiveQuery} onChange={setArchiveQuery} placeholder="Search name, plus-one or contact" />
+                <SearchBox value={archiveQuery} onChange={setArchiveQuery} placeholder="Search name or contact" />
                 {/* Status filter chips with counts */}
                 <div className="mt-2.5 flex flex-wrap gap-1.5">
                   {(
@@ -764,7 +684,7 @@ export default function AdminApp() {
                   <table className="w-full text-left text-sm whitespace-nowrap">
                     <thead className="sticky top-0 z-10 bg-[#E9F1EC] shadow-[inset_0_-1px_0_rgba(24,88,68,0.18)]">
                       <tr>
-                        {['Name', 'Status', 'Plus-one', 'Contact', 'Date', ''].map((h) => (
+                        {['Name', 'Status', 'Contact', 'Date', ''].map((h) => (
                           <th key={h} className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[#185844]">
                             {h}
                           </th>
@@ -776,7 +696,6 @@ export default function AdminApp() {
                         <tr key={g.id} className="hover:bg-[#185844]/[0.04] transition-colors">
                           <td className="px-4 py-2.5 font-medium text-[#102F27]">{g.name}</td>
                           <td className="px-4 py-2.5"><StatusBadge attending={g.isAttending === 'yes'} /></td>
-                          <td className="px-4 py-2.5 text-xs text-stone-600 whitespace-normal max-w-[12rem]">{formatPlusOneGuest(g)}</td>
                           <td className="px-4 py-2.5 font-mono text-stone-500">{formatContact(g.contact)}</td>
                           <td className="px-4 py-2.5 text-xs text-stone-500">{formatDate(g.timestamp)}</td>
                           <td className="px-3 py-2.5 text-right">
@@ -797,7 +716,6 @@ export default function AdminApp() {
                           {g.name}
                           <StatusBadge attending={g.isAttending === 'yes'} small />
                         </p>
-                        {g.brings_guest === 'yes' && <p className="mt-0.5 text-[10px] text-stone-500">Plus-one: {formatPlusOneGuest(g)}</p>}
                         <p className="mt-0.5 font-mono text-xs text-stone-500">{formatContact(g.contact)}</p>
                       </div>
                       <div className="flex shrink-0 self-center">
@@ -912,44 +830,6 @@ export default function AdminApp() {
                   </div>
                 </div>
 
-                {editDraft.isAttending === 'yes' && (
-                  <div>
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-stone-500">
-                      Plus-ones <span className="tabular-nums">({editDraft.guests.length}/{MAX_GUESTS})</span>
-                    </span>
-                    <div className="mt-1.5 space-y-2">
-                      {editDraft.guests.map((guest, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <input
-                            value={guest}
-                            onChange={(e) => updateGuest(i, e.target.value)}
-                            placeholder={`Guest ${i + 1} full name`}
-                            className={`${inputClass} mt-0`}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setEditDraft({ ...editDraft, guests: editDraft.guests.filter((_, j) => j !== i) })}
-                            aria-label={`Remove guest ${i + 1}`}
-                            className="shrink-0 rounded-full p-2 text-stone-400 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
-                      {editDraft.guests.length === 0 && <p className="text-xs text-stone-500">No plus-ones.</p>}
-                      {editDraft.guests.length < MAX_GUESTS && (
-                        <button
-                          type="button"
-                          onClick={() => setEditDraft({ ...editDraft, guests: [...editDraft.guests, ''] })}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-[#185844]/30 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#185844] hover:bg-[#185844] hover:text-white transition-colors cursor-pointer"
-                        >
-                          <Plus className="h-3.5 w-3.5" /> Add guest
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 {editError && <p className="text-xs text-red-600">{editError}</p>}
               </div>
 
@@ -1005,7 +885,7 @@ export default function AdminApp() {
                 {pendingDelete.name}
               </h3>
               <p className="mt-2 text-sm text-stone-500">
-                This RSVP{parseGuestNames(pendingDelete.guest_names).length ? ' and its plus-ones' : ''} will be moved to the Archive. You can restore it anytime.
+                This RSVP will be moved to the Archive. You can restore it anytime.
               </p>
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <button

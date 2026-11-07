@@ -327,6 +327,8 @@ export const ENTOURAGE_DATA: EntourageCategory[] = [
       { role: 'Bridesmaid', name: 'Nina Gonzales' },
       { role: 'Groomsman', name: 'Chatur Wettasinghe' },
       { role: 'Bridesmaid', name: 'Aldane Pauline Gonzales' },
+      { role: 'Groomsman', name: 'Alaine Gonzales' },
+      { role: 'Bridesmaid', name: 'Keisha Layug' },
       { role: 'Groomsman', name: 'John Brozas' },
       { role: 'Bridesmaid', name: 'Norelle Laine Chavez' },
       { role: 'Groomsman', name: 'Anton Valdez' },
@@ -339,8 +341,6 @@ export const ENTOURAGE_DATA: EntourageCategory[] = [
       { role: 'Bridesmaid', name: 'Cristine Pasion' },
       { role: 'Groomsman', name: 'Dustine Mayos' },
       { role: 'Bridesmaid', name: 'Melaine Ordono' },
-      { role: 'Groomsman', name: 'Alaine Gonzales' },
-      { role: 'Bridesmaid', name: 'Keisha Layug' },
     ],
   },
   {

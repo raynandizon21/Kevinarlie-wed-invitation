@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { Check, ChevronLeft, ChevronDown, Navigation, Plus, X } from 'lucide-react';
+import { Check, ChevronLeft, ChevronDown, Navigation, Plus } from 'lucide-react';
 import { EntourageCategory, TimelineItem } from '../types/wedding';
 import { getRsvpSourceForSubmit } from '../rsvpSource';
 import { FAQS_DATA } from '../data/weddingData';
@@ -434,12 +434,8 @@ export const EntouragePage: React.FC<{ onBack: () => void; categories: Entourage
 // --- RSVP form (shared by the mobile RSVP page and the desktop site) ---
 // Saves to the RSVP API (/api/rsvps), same flow as the wedding-invitation project:
 // guests from the invite submit as `web`; principal sponsors from the QR link submit as `qr`.
-// Anyone attending can bring guests (1..MAX_GUESTS), each with a full name.
+// No plus-ones: each guest RSVPs for themselves.
 type GuestChoice = '' | 'yes' | 'no';
-const MAX_GUESTS = 10;
-// One person per guest field: "Ana / Ben", "Ana & Ben", "Ana, Ben", "Ana and Ben" are rejected ("Roxas, Jr." is fine)
-// (keep in sync with MULTI_NAME in src/server/index.ts)
-const MULTI_NAME = /[\/&+]|\band\b|,(?!\s*(?:jr|sr|ii|iii|iv)\.?\s*$)/i;
 
 // Big tap-friendly choice for the RSVP form (a styled radio)
 const Choice: React.FC<{ name: string; checked: boolean; locked: boolean; onChange: () => void; children: React.ReactNode }> = ({
@@ -467,16 +463,9 @@ export const RsvpForm: React.FC<{
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
   const [isAttending, setIsAttending] = useState<GuestChoice>('');
-  const [bringsGuest, setBringsGuest] = useState<GuestChoice>('');
-  const [guestNames, setGuestNames] = useState<string[]>(['']);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
-
-  const showPlusOne = isAttending === 'yes';
-  const setGuestName = (i: number, value: string) => setGuestNames((prev) => prev.map((n, j) => (j === i ? value : n)));
-  const addGuest = () => setGuestNames((prev) => (prev.length < MAX_GUESTS ? [...prev, ''] : prev));
-  const removeGuest = (i: number) => setGuestNames((prev) => (prev.length > 1 ? prev.filter((_, j) => j !== i) : ['']));
 
   useEffect(() => {
     if (!submitted || !onDone) return;
@@ -493,26 +482,7 @@ export const RsvpForm: React.FC<{
     }
 
     const source = getRsvpSourceForSubmit();
-    const body: Record<string, unknown> = { name: name.trim(), contact: contact.trim(), isAttending, source };
-
-    if (isAttending === 'yes') {
-      if (bringsGuest !== 'yes' && bringsGuest !== 'no') {
-        setError('Please choose Yes or No for bringing guests.');
-        return;
-      }
-      body.bringsGuest = bringsGuest;
-      if (bringsGuest === 'yes') {
-        if (guestNames.some((n) => !n.trim())) {
-          setError("Please enter each guest's full name (or remove the empty one).");
-          return;
-        }
-        if (guestNames.some((n) => MULTI_NAME.test(n))) {
-          setError('Please enter one person per field. Tap "Add another guest" for each extra person.');
-          return;
-        }
-        body.guestNames = guestNames.map((n) => n.trim());
-      }
-    }
+    const body = { name: name.trim(), contact: contact.trim(), isAttending, source };
 
     try {
       setSubmitting(true);
@@ -569,93 +539,13 @@ export const RsvpForm: React.FC<{
                 key={value}
                 name="attendance"
                 checked={isAttending === value}
-                onChange={() => {
-                  setIsAttending(value);
-                  if (value === 'no') {
-                    setBringsGuest('');
-                    setGuestNames(['']);
-                  }
-                }}
+                onChange={() => setIsAttending(value)}
               >
                 {label}
               </Choice>
             ))}
           </div>
         </div>
-
-        {/* Plus-ones: anyone attending can bring 1..MAX_GUESTS named guests */}
-        {showPlusOne && (
-          <div className="space-y-2">
-            <p className={labelClass}>Will you bring any guests?</p>
-            <div className="grid grid-cols-2 gap-2">
-              {(['yes', 'no'] as const).map((value) => (
-                <Choice
-                  key={value}
-                  locked={locked}
-                  name="brings-guest"
-                  checked={bringsGuest === value}
-                  onChange={() => {
-                    setBringsGuest(value);
-                    if (value === 'no') setGuestNames(['']);
-                  }}
-                >
-                  {value === 'yes' ? 'Yes' : 'No'}
-                </Choice>
-              ))}
-            </div>
-            {bringsGuest === 'yes' && (
-              <div className="space-y-2 pt-2">
-                <p className={labelClass}>
-                  Guest full name{guestNames.length > 1 ? 's' : ''}{' '}
-                  <span className="normal-case tracking-normal text-stone-400">({guestNames.length}/{MAX_GUESTS})</span>
-                </p>
-                {guestNames.map((guest, i) => (
-                  <div key={i}>
-                    {/* Number on the left, remove (x) inside the field so the input keeps the full width */}
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-[#B08A4F] tabular-nums">
-                        {i + 1}.
-                      </span>
-                      <input
-                        type="text"
-                        value={guest}
-                        onChange={(e) => setGuestName(i, e.target.value)}
-                        disabled={locked}
-                        placeholder="Full name"
-                        aria-label={`Guest ${i + 1} full name`}
-                        className={`${inputClass} pl-8 ${guestNames.length > 1 ? 'pr-10' : ''}`}
-                      />
-                      {guestNames.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeGuest(i)}
-                          disabled={locked}
-                          aria-label={`Remove guest ${i + 1}`}
-                          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full p-2 text-stone-400 hover:text-red-700 transition-colors cursor-pointer"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                    {MULTI_NAME.test(guest) && (
-                      <p className="mt-1 pl-1 text-[11px] text-red-600">One person per field. Use “Add another guest” for the next person.</p>
-                    )}
-                  </div>
-                ))}
-                {guestNames.length < MAX_GUESTS && (
-                  <button
-                    type="button"
-                    onClick={addGuest}
-                    disabled={locked}
-                    className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#185844]/35 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#185844] hover:bg-white/60 transition-colors cursor-pointer"
-                  >
-                    <Plus className="h-3.5 w-3.5" /> Add another guest
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
 
         {error && <p className="text-red-500 text-[11px] text-center -mt-1">{error}</p>}
 
