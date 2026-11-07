@@ -1,6 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import {fileURLToPath} from 'url';
 import {defineConfig, loadEnv, type Plugin} from 'vite';
 
 // Serve the RSVP admin panel at a clean /admin URL (the file itself is admin.html).
@@ -31,6 +32,8 @@ function adminCleanUrl(): Plugin {
   };
 }
 
+const root = fileURLToPath(new URL('.', import.meta.url));
+
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   const apiPort = env.RSVP_API_PORT || '3002';
@@ -39,7 +42,7 @@ export default defineConfig(({mode}) => {
     plugins: [react(), tailwindcss(), adminCleanUrl()],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(root, '.'),
       },
     },
     server: {
@@ -66,8 +69,8 @@ export default defineConfig(({mode}) => {
       rollupOptions: {
         // Invitation + RSVP admin panel (/admin.html)
         input: {
-          main: path.resolve(__dirname, 'index.html'),
-          admin: path.resolve(__dirname, 'admin.html'),
+          main: path.resolve(root, 'index.html'),
+          admin: path.resolve(root, 'admin.html'),
         },
       },
     },
