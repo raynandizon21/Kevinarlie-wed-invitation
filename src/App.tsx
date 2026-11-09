@@ -63,7 +63,7 @@ const STORY_BAR_COLOR: Partial<Record<AppView, string>> = {
   faqs: '#F2EBDD',
   rsvp: '#102F27',
   photo1: '#F2EBDD',
-  photo2: '#78947F',
+  photo2: '#F2EBDD',
   photo3: '#102F27',
   thanks: '#F2EBDD',
 };
@@ -382,8 +382,9 @@ export default function App() {
             </StorySlide>
           )}
           {activeView === 'faqs' && (
-            <StorySlide key="faqs" motion={storyMotion} onNext={storyNext} onPrev={storyPrev} nextLabel={nextLabel}>
-              <FaqPage onBack={storyPrev} />
+            // Short page: it draws its own Next cue so it fits one screen without scrolling
+            <StorySlide key="faqs" motion={storyMotion} onNext={storyNext} onPrev={storyPrev}>
+              <FaqPage onBack={storyPrev} footer={nextLabel && <NextCue label={nextLabel} onNext={storyNext} />} />
             </StorySlide>
           )}
           {activeView === 'rsvp' && (

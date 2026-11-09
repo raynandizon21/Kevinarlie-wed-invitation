@@ -727,8 +727,8 @@ export const FaqAccordion: React.FC = () => {
   );
 };
 
-export const FaqPage: React.FC<{ onBack: () => void }> = ({ onBack }) => (
-  <div className="relative min-h-[100dvh] bg-[#F2EBDD] text-[#102F27]">
+export const FaqPage: React.FC<{ onBack: () => void; footer?: React.ReactNode }> = ({ onBack, footer }) => (
+  <div className="relative flex min-h-[100dvh] flex-col bg-[#F2EBDD] text-[#102F27]">
     {/* Forest band with two thin gold diagonals */}
     <div aria-hidden className="absolute inset-x-0 top-0 h-[clamp(17rem,40dvh,22rem)] overflow-hidden bg-[#102F27]">
       <span className="absolute right-[22%] -top-10 h-[130%] w-[2px] origin-top rotate-[32deg] bg-gradient-to-b from-[#B08A4F] via-[#B08A4F]/70 to-transparent" />
@@ -756,5 +756,7 @@ export const FaqPage: React.FC<{ onBack: () => void }> = ({ onBack }) => (
         Still have questions? Message us anytime, we&rsquo;re happy to help.
       </motion.p>
     </div>
+    {/* Next cue inside the one-screen page (no scrolling to reach it); moves down when answers open */}
+    {footer && <div className="relative mt-auto pb-[max(2.25rem,env(safe-area-inset-bottom,0px))] pt-2">{footer}</div>}
   </div>
 );

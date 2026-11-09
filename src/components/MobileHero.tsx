@@ -54,9 +54,10 @@ export const MobileHero: React.FC<{
     >
       <p className="font-['Parisienne'] text-[1.6rem] text-white/95 drop-shadow">our wedding story</p>
       {/* Couple names in calligraphy */}
-      <h1 className="mt-4 font-['Parisienne'] font-normal leading-[0.95] drop-shadow-[0_4px_20px_rgba(0,0,0,0.35)]">
+      <h1 className="mt-4 font-names font-normal leading-[0.95] drop-shadow-[0_4px_20px_rgba(0,0,0,0.35)]">
         <span className="block text-[clamp(4.5rem,24vw,6.5rem)]">{groomName}</span>
-        <span className="block -my-2 text-[clamp(2.75rem,14vw,3.75rem)] text-[#E6D3AE]">&amp;</span>
+        {/* Small calligraphy ampersand so it doesn't compete with the script names */}
+        <span className="block my-1 font-script text-[clamp(2rem,10vw,2.6rem)] text-[#E6D3AE]">&amp;</span>
         <span className="block text-[clamp(4.5rem,24vw,6.5rem)]">{brideName}</span>
       </h1>
       <p className="mt-3 font-['Parisienne'] text-[1.6rem] text-white/95 drop-shadow">hope you&apos;ll celebrate with us</p>

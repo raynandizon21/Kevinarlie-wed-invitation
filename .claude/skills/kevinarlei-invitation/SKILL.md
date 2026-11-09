@@ -54,7 +54,7 @@ expecting a visible change.
 
 - Colors: Ivory `#F2EBDD`, Sage `#78947F`, Emerald `#185844`, Forest `#102F27`, Antique Gold `#B08A4F`
   (light gold accent `#E6D3AE`). Don't introduce other palettes.
-- Fonts (loaded in `index.html`): **Parisienne** for the couple names, hero taglines and the K&A monogram;
+- Fonts (loaded in `index.html`): **The Nautigal** (`font-names`) for the couple names; **Parisienne** for hero taglines; the K&A monogram is Cormorant (serif) with a small script `&`;
   **Oswald** light uppercase with wide tracking for section titles; `font-script` (Alex Brush) for small script
   eyebrows; Cormorant Garamond (`font-serif`) for names/body headings.
 - Section headings on desktop: gold script eyebrow + Oswald title + `Sprig`. Diagonal cuts (`Diagonal`) must use the

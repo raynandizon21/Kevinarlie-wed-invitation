@@ -5,6 +5,8 @@
     --font-serif: 'Cormorant Garamond', Georgia, serif;
     --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     --font-script: 'Alex Brush', cursive;
+    /* Couple names (hero, thank-you) */
+    --font-names: 'The Nautigal';
   }
 
   body {
@@ -16,6 +18,10 @@
 
   h1, h2, h3, .font-serif {
     font-family: var(--font-serif);
+  }
+
+  .font-names {
+    font-family: var(--font-names), cursive;
   }
 
   .font-script {

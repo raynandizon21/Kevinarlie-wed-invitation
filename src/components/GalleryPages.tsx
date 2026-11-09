@@ -12,22 +12,24 @@ import tablescapeImg from '../assets/images/wedding_tablescape_candlelight_singl
  * One photo between story pages: after Details, after Timeline, after Entourage (in that order).
  * Same idea on each (framed photo + big script line) but its own design, named by its page color:
  * 'ivory' = photo left with a gold frame offset to the right, text top-right
- * 'sage' = photo centered with an ivory outline all around, text top-center
+ * 'sage' = phone: groom & bride photos tilted across a forest band (ivory page); desktop: photo centered
  * 'forest' = photo right with a gold frame offset to the left, text top-left
  * This is an invitation, so the lines look ahead to the wedding.
  */
 export type PhotoLayout = 'ivory' | 'sage' | 'forest';
 export const STORY_PHOTOS: { src: string; caption: string; layout: PhotoLayout; position?: string }[] = [
   { src: jardinVenueImg, caption: 'Our love story', layout: 'ivory' },
-  { src: tablescapeImg, caption: 'Two hearts, one love', layout: 'sage' },
-  { src: meadowCoupleImg, caption: 'Counting down to forever', layout: 'forest', position: '60% center' },
+  { src: tablescapeImg, caption: 'Hand in Hand', layout: 'sage' },
+  { src: meadowCoupleImg, caption: 'Always & Forever', layout: 'forest', position: '60% center' },
 ];
 const PAGE_BG: Record<PhotoLayout, string> = {
   ivory: 'bg-[#F2EBDD] text-[#102F27]',
-  sage: 'bg-[#78947F] text-white',
+  sage: 'bg-[#F2EBDD] text-[#102F27]',
   forest: 'bg-[#102F27] text-white',
 };
 const easeOut = [0.16, 1, 0.3, 1] as const;
+/** Fine gold diamond lattice across the emerald band on the groom & bride page */
+const BAND_PATTERN = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'><path d='M14 0 L28 14 L14 28 L0 14 Z' fill='none' stroke='%23B08A4F' stroke-opacity='0.45' stroke-width='0.8'/><circle cx='14' cy='14' r='1.3' fill='%23E6D3AE' fill-opacity='0.55'/></svg>")`;
 /** How long each photo shows on its own before the Next cue appears */
 const PHOTO_MS = 4000;
 
@@ -66,7 +68,7 @@ export const PhotoPage: React.FC<{
   brideName: string;
 }> = ({ photo, onBack, onNext, nextLabel, groomName, brideName }) => {
   const slide = STORY_PHOTOS[photo] ?? STORY_PHOTOS[0];
-  const dark = slide.layout !== 'ivory'; // light text on emerald / forest
+  const dark = slide.layout === 'forest'; // light text on forest
   const [showCue, setShowCue] = useState(false);
   useEffect(() => {
     const t = window.setTimeout(() => setShowCue(true), PHOTO_MS);
@@ -106,7 +108,7 @@ export const PhotoPage: React.FC<{
         <div className={`${page} px-[clamp(1.5rem,8vw,2.25rem)]`}>
           <motion.div {...fadeUp(0.3)} className="text-right">
             <div className="flex justify-end">{namesLine}</div>
-            <p className="ml-auto mt-3 max-w-[15rem] font-['Parisienne'] text-[clamp(2.8rem,14vw,3.6rem)] leading-[1.05] text-[#102F27]">
+            <p className="ml-auto mt-3 max-w-[15rem] font-names text-[clamp(3.2rem,16vw,4.1rem)] leading-[1.05] text-[#102F27]">
               {slide.caption}
             </p>
           </motion.div>
@@ -122,33 +124,66 @@ export const PhotoPage: React.FC<{
       )}
 
       {slide.layout === 'sage' && (
-        <div className={`${page} items-center px-[clamp(1.5rem,8vw,2.25rem)] text-center`}>
-          <motion.div {...fadeUp(0.3)}>
-            <div className="flex justify-center">{namesLine}</div>
-            <p className="mt-3 text-balance font-['Parisienne'] text-[clamp(2.8rem,14vw,3.6rem)] leading-[1.05] text-white">{slide.caption}</p>
-          </motion.div>
-          {/* Photo centered, ivory outline all around it */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.1, delay: 0.15, ease: easeOut }}
-            className="relative mt-9 min-h-0 flex-1"
-            style={{ width: 'min(calc(100% - 1.5rem), 17.5rem)' }}
-          >
-            <span className="absolute -inset-3 border border-[#F2EBDD]/70" />
-            <div className="relative h-full overflow-hidden shadow-[0_24px_50px_-20px_rgba(16,47,39,0.6)]">
-              <KenBurns src={slide.src} alt={slide.caption} position={slide.position} />
+        <>
+          {/* Groom & bride: ivory page, forest band across the middle, two tilted white-framed photos overlapping on it */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+            <Sprig className="absolute right-4 top-14 w-24 rotate-[160deg] text-[#78947F]/60" />
+            <Sprig className="absolute bottom-16 left-3 w-24 -rotate-12 text-[#78947F]/60" />
+            {/* Emerald band: fine gold lattice, double gold lines top and bottom */}
+            <div
+              className="absolute inset-x-0 top-[44%] h-[10%] bg-[#185844]"
+              style={{ backgroundImage: BAND_PATTERN, backgroundSize: '28px 28px' }}
+            >
+              <span className="absolute inset-x-0 top-1 h-px bg-[#B08A4F]" />
+              <span className="absolute inset-x-0 top-2 h-px bg-[#B08A4F]/50" />
+              <span className="absolute inset-x-0 bottom-2 h-px bg-[#B08A4F]/50" />
+              <span className="absolute inset-x-0 bottom-1 h-px bg-[#B08A4F]" />
             </div>
-          </motion.div>
-          <div className="mt-3">{cue}</div>
-        </div>
+          </div>
+          <div className={`${page} px-[clamp(1.25rem,6vw,2rem)]`}>
+            <div className="relative min-h-0 flex-1">
+              {/* Groom: photo top-left, name to its right */}
+              <motion.div
+                initial={{ opacity: 0, x: -30, rotate: -12 }}
+                animate={{ opacity: 1, x: 0, rotate: -7 }}
+                transition={{ duration: 1.2, delay: 0.15, ease: easeOut }}
+                className="absolute left-[3%] top-[9%] h-[40%] w-[54%] bg-white p-1.5 shadow-[0_18px_30px_-12px_rgba(16,47,39,0.55)]"
+              >
+                <div className="h-full overflow-hidden">
+                  <KenBurns src={meadowCoupleImg} alt={groomName} position="82% center" />
+                </div>
+              </motion.div>
+              <motion.div {...fadeUp(0.5)} className="absolute right-[4%] top-[25%] w-[36%]">
+                <p className="font-['Oswald'] text-[10px] font-light uppercase tracking-[0.35em] text-[#B08A4F]">Groom</p>
+                <p className="font-names text-[clamp(2.6rem,13vw,3.3rem)] leading-none text-[#185844]">{groomName}</p>
+              </motion.div>
+
+              {/* Bride: photo bottom-right, name to its left */}
+              <motion.div
+                initial={{ opacity: 0, x: 30, rotate: 12 }}
+                animate={{ opacity: 1, x: 0, rotate: 6 }}
+                transition={{ duration: 1.2, delay: 0.35, ease: easeOut }}
+                className="absolute right-[3%] top-[43%] z-10 h-[40%] w-[54%] bg-white p-1.5 shadow-[0_18px_30px_-12px_rgba(16,47,39,0.55)]"
+              >
+                <div className="h-full overflow-hidden">
+                  <KenBurns src={meadowCoupleImg} alt={brideName} position="28% center" />
+                </div>
+              </motion.div>
+              <motion.div {...fadeUp(0.7)} className="absolute left-[4%] top-[58%] w-[36%] text-right">
+                <p className="font-['Oswald'] text-[10px] font-light uppercase tracking-[0.35em] text-[#B08A4F]">Bride</p>
+                <p className="font-names text-[clamp(2.6rem,13vw,3.3rem)] leading-none text-[#185844]">{brideName}</p>
+              </motion.div>
+            </div>
+            {cue}
+          </div>
+        </>
       )}
 
       {slide.layout === 'forest' && (
         <div className={`${page} px-[clamp(1.5rem,8vw,2.25rem)]`}>
           <motion.div {...fadeUp(0.3)}>
             {namesLine}
-            <p className="mt-3 max-w-[16rem] font-['Parisienne'] text-[clamp(2.8rem,14vw,3.6rem)] leading-[1.05] text-white">{slide.caption}</p>
+            <p className="mt-3 max-w-[16rem] font-names text-[clamp(3.2rem,16vw,4.1rem)] leading-[1.05] text-white">{slide.caption}</p>
           </motion.div>
           {/* Photo right, gold outline offset to the left */}
           <motion.div {...slideIn(24)} className="relative mt-7 min-h-0 flex-1 self-end" style={{ width: 'min(100%, 19rem)' }}>
@@ -196,7 +231,7 @@ export const DesktopPhotoBand: React.FC<{ photo: number; groomName: string; brid
     </p>
   );
   const script = (tone: string, extra = '') => (
-    <p className={`mt-4 font-['Parisienne'] text-[clamp(3.5rem,5.5vw,5rem)] leading-[1.05] ${tone} ${extra}`}>{slide.caption}</p>
+    <p className={`mt-4 font-names text-[clamp(4rem,6.2vw,5.6rem)] leading-[1.05] ${tone} ${extra}`}>{slide.caption}</p>
   );
 
   if (slide.layout === 'sage') {
@@ -272,8 +307,8 @@ export const ThanksPage: React.FC<{
         </p>
         <div className="mt-8 flex items-center gap-3">
           <span className="h-px w-8 bg-[#B08A4F]/50" />
-          <p className="font-['Parisienne'] text-[1.9rem] leading-none">
-            {groomName} <span className="text-[#B08A4F]">&amp;</span> {brideName}
+          <p className="font-names text-[1.9rem] leading-none">
+            {groomName} <span className="font-script text-[0.7em] text-[#B08A4F]">&amp;</span> {brideName}
           </p>
           <span className="h-px w-8 bg-[#B08A4F]/50" />
         </div>

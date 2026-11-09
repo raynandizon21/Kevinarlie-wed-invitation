@@ -166,9 +166,10 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
               scrolled ? 'my-2 h-14 w-14' : 'mt-5 h-24 w-24'
             }`}
           >
-            <span className={`font-['Parisienne'] text-[#B08A4F] leading-none whitespace-nowrap transition-all duration-500 ${scrolled ? 'text-lg' : 'text-[1.9rem]'}`}>
+            {/* Classic serif monogram: K & A with a small script ampersand */}
+            <span className={`font-serif font-medium text-[#B08A4F] leading-none whitespace-nowrap transition-all duration-500 ${scrolled ? 'text-[1.35rem]' : 'text-[2.2rem]'}`}>
               {groomName[0]}
-              <span className="text-[0.6em] px-0.5">&amp;</span>
+              <span className="px-[0.1em] align-[0.15em] font-script text-[0.45em] font-normal">&amp;</span>
               {brideName[0]}
             </span>
             {!scrolled && <Sprig className="absolute -right-7 -top-3 w-12 text-white/90" />}
@@ -206,9 +207,10 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
         >
           <p className="font-['Parisienne'] text-[2rem] text-white/95 drop-shadow">our wedding story</p>
           {/* Couple names in calligraphy */}
-          <h1 className="mt-6 font-['Parisienne'] font-normal leading-[0.95] drop-shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+          <h1 className="mt-6 font-names font-normal leading-[0.95] drop-shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
             <span className="block text-[clamp(5.5rem,10vw,9rem)]">{groomName}</span>
-            <span className="block -my-3 text-[clamp(3rem,5vw,4.5rem)] text-[#E6D3AE]">&amp;</span>
+            {/* Small calligraphy ampersand so it doesn't compete with the script names */}
+            <span className="block my-1 font-script text-[clamp(2.5rem,3.6vw,3.3rem)] text-[#E6D3AE]">&amp;</span>
             <span className="block text-[clamp(5.5rem,10vw,9rem)]">{brideName}</span>
           </h1>
           <p className="mt-4 font-['Parisienne'] text-[2rem] text-white/95 drop-shadow">hope you&apos;ll celebrate with us</p>
@@ -469,9 +471,9 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
       {/* ================= FOOTER ================= */}
       <footer className="bg-[#102F27] pb-16 pt-10 text-center text-white">
         <div className="mx-auto flex h-20 w-20 items-center justify-center bg-white">
-          <span className="font-['Parisienne'] text-[1.7rem] leading-none whitespace-nowrap text-[#B08A4F]">
+          <span className="font-serif font-medium text-[1.9rem] leading-none whitespace-nowrap text-[#B08A4F]">
             {groomName[0]}
-            <span className="text-[0.6em] px-0.5">&amp;</span>
+            <span className="px-[0.1em] align-[0.15em] font-script text-[0.45em] font-normal">&amp;</span>
             {brideName[0]}
           </span>
         </div>
