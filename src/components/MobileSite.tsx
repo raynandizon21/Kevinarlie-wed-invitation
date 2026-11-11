@@ -33,6 +33,13 @@ const reveal = {
   transition: { duration: 0.9, ease: easeOut },
 } as const;
 const pageX = 'px-[clamp(1rem,6vw,1.75rem)]';
+// Forest green fading to transparent along an ease-out curve: solid at the edge, then tapering off slowly, so
+// a photo melts into the green with no visible line where the fade stops
+const EASE_FADE = [
+  [1, 0], [0.92, 8], [0.8, 18], [0.66, 28], [0.52, 38], [0.39, 48], [0.27, 58], [0.17, 68], [0.09, 78], [0.04, 88], [0, 100],
+]
+  .map(([a, p]) => `rgba(16,47,39,${a}) ${p}%`)
+  .join(', ');
 // Soft edge fades for images that sit on the white page (left/right and top/bottom)
 const FADE_X = 'linear-gradient(to right, transparent, #000 5%, #000 95%, transparent)';
 const FADE_Y = 'linear-gradient(to bottom, transparent, #000 14%, #000 88%, transparent)';
@@ -530,13 +537,22 @@ export const MobileSite: React.FC<{
           className="absolute inset-0 h-full w-full object-cover object-[50%_center]"
         />
         {/* Soft forest wash so white text reads over the couple, a little darker behind the text column */}
-        {/* The stone wall is pale, so a soft forest shade sits behind the text column only; the couple below stays bright */}
-        <div className="absolute inset-0 bg-[#102F27]/15" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_85%_42%_at_50%_36%,rgba(16,47,39,0.55)_0%,rgba(16,47,39,0.25)_55%,transparent_80%)]" />
+        {/* The stone wall is pale, so the whole photo gets a forest wash, deeper behind the names (upper middle)
+            and behind the date block (lower middle), so the white text always reads */}
+        <div className="absolute inset-0 bg-[#102F27]/35" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_95%_40%_at_50%_33%,rgba(16,47,39,0.6)_0%,rgba(16,47,39,0.3)_60%,transparent_85%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_90%_18%_at_50%_63%,rgba(16,47,39,0.45)_0%,transparent_80%)]" />
         {/* Photo fades into forest at the top and bottom, the same color as the phone's status bar and toolbar
             (iPhone Safari draws its bars over the page), so the photo runs edge to edge with no hard line */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#102F27] via-[#102F27]/40 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[calc(100lvh-100svh+7rem)] bg-gradient-to-t from-[#102F27] via-[#102F27]/45 to-transparent" />
+        {/* Eased fades (many stops) so the edge of the fade never shows as a line */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-48"
+          style={{ background: `linear-gradient(to bottom, ${EASE_FADE})` }}
+        />
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[calc(100lvh-100svh+14rem)]"
+          style={{ background: `linear-gradient(to top, ${EASE_FADE})` }}
+        />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -544,8 +560,8 @@ export const MobileSite: React.FC<{
           className="relative flex h-[100svh] min-h-[560px] flex-col items-center justify-start px-6 pt-[max(5rem,17svh)] text-center text-white [text-shadow:0_2px_14px_rgba(16,47,39,0.55)]"
         >
           <p className="font-['Parisienne'] text-[1.5rem] text-white">our wedding story</p>
-          {/* Allura (font option #4): simple calligraphy lettering, thick/thin pen strokes without heavy flourishes */}
-          <h1 className="mt-4 font-['Allura'] font-normal leading-[0.85] drop-shadow-[0_4px_18px_rgba(0,0,0,0.35)] [&>span:not(:nth-child(2))]:!text-[clamp(5.2rem,min(28vw,13svh),7.4rem)]">
+          {/* Ms Madi: the couple's chosen calligraphy for their names */}
+          <h1 className="mt-4 font-['Ms_Madi'] font-normal leading-[0.85] drop-shadow-[0_4px_18px_rgba(0,0,0,0.35)] [&>span:not(:nth-child(2))]:!text-[clamp(5.2rem,min(28vw,13svh),7.4rem)]">
             <span className="block text-[clamp(5rem,min(27vw,12.5svh),7rem)]">{groomName}</span>
             <span className="-my-1 block text-[clamp(2.4rem,12vw,3.2rem)] leading-none">&amp;</span>
             <span className="block text-[clamp(5rem,min(27vw,12.5svh),7rem)]">{brideName}</span>

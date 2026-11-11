@@ -4,7 +4,7 @@ import { Sprig } from './Sprig';
 // Prenup photos: colonnade walk (portrait), crosswalk from above (landscape), city walk (landscape)
 import colonnadeImg from '../assets/images/image0.jpeg';
 import crosswalkImg from '../assets/images/image1.jpeg';
-import cityWalkImg from '../assets/images/image2.jpeg';
+import colonnadeCopyImg from '../assets/images/image0 - Copy.jpeg';
 
 /**
  * Desktop photo bands between sections, and the closing Thank-you page.
@@ -17,7 +17,8 @@ export const STORY_PHOTOS: { src: string; caption: string; layout: PhotoLayout; 
   // 16:9 frame: the couple sits right of centre
   { src: crosswalkImg, caption: 'Hand in Hand', layout: 'sage', position: 'center 40%' },
   // 4:5 frame cut from the landscape city walk, centred on the couple (the hero shows the whole photo)
-  { src: cityWalkImg, caption: 'Always & Forever', layout: 'forest', position: '35% center' },
+  // colonnade walk: the couple stands in the middle, lower part of the photo
+  { src: colonnadeCopyImg, caption: 'Always & Forever', layout: 'forest', position: '50% 70%' },
 ];
 const easeOut = [0.16, 1, 0.3, 1] as const;
 
@@ -127,8 +128,8 @@ export const ThanksPage: React.FC<{
         </p>
         <div className="mt-8 flex items-center gap-3">
           <span className="h-px w-8 bg-[#B08A4F]/50" />
-          <p className="font-names text-[1.9rem] leading-none">
-            {groomName} <span className="font-script text-[0.7em] text-[#B08A4F]">&amp;</span> {brideName}
+          <p className="font-['Ms_Madi'] text-[2.4rem] leading-none">
+            {groomName} <span className="text-[#B08A4F]">&amp;</span> {brideName}
           </p>
           <span className="h-px w-8 bg-[#B08A4F]/50" />
         </div>

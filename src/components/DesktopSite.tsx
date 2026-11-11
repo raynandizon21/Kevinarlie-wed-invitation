@@ -221,10 +221,10 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
           <div className="absolute left-[75%] top-[54%] flex -translate-x-1/2 -translate-y-1/2 flex-col items-center whitespace-nowrap text-center">
           <p className="font-['Parisienne'] text-[2rem] text-white/95 drop-shadow">our wedding story</p>
           {/* Couple names in calligraphy */}
-          <h1 className="mt-6 font-names font-normal leading-[0.95] drop-shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+          {/* Ms Madi: the couple's chosen calligraphy for their names (same as the phone) */}
+          <h1 className="mt-6 font-['Ms_Madi'] font-normal leading-[0.9] drop-shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
             <span className="block text-[clamp(5.5rem,10vw,9rem)]">{groomName}</span>
-            {/* Small calligraphy ampersand so it doesn't compete with the script names */}
-            <span className="block my-1 font-script text-[clamp(2.5rem,3.6vw,3.3rem)] text-[#E6D3AE]">&amp;</span>
+            <span className="block text-[clamp(3rem,4.5vw,4.2rem)] leading-none text-[#E6D3AE]">&amp;</span>
             <span className="block text-[clamp(5.5rem,10vw,9rem)]">{brideName}</span>
           </h1>
           <p className="mt-4 font-['Parisienne'] text-[2rem] text-white/95 drop-shadow">hope you&apos;ll celebrate with us</p>
