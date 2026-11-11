@@ -7,12 +7,15 @@
     "dev": "concurrently -n web,api -c green,yellow \"npm:dev:web\" \"npm:dev:server\"",
     "dev:web": "vite --port=2213 --host=0.0.0.0",
     "dev:server": "tsx watch src/server/index.ts",
-    "build": "vite build",
+    "build": "bash scripts/build.sh",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "admin:set": "tsx src/server/admin-user.ts set",
-    "admin:list": "tsx src/server/admin-user.ts list"
+    "admin:list": "tsx src/server/admin-user.ts list",
+    "db:backup": "bash scripts/db-backup.sh",
+    "db:restore": "bash scripts/db-restore.sh",
+    "build:vite": "vite build"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

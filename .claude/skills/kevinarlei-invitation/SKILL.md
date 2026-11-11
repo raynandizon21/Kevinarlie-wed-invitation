@@ -12,8 +12,8 @@ The person working on this writes in Taglish; reply the same way.
 
 - MySQL (XAMPP) must be running on `localhost:3306`.
 - `npm run dev` starts both processes:
-  - `[web]` Vite on **http://localhost:2213** (invite) and **http://localhost:2213/admin** (admin); PM2 preview serves
-    the admin on its own port 2214 (`ecosystem.config.cjs`)
+  - `[web]` Vite on **http://localhost:2213** (invite) and **http://localhost:2213/admin** (admin) — dev only;
+    production serves the built `dist/` from nginx (see Production)
   - `[api]` `tsx watch src/server/index.ts` on port **3002** (`RSVP_API_PORT`)
 - Vite proxies `/api` and `/socket.io` (websocket) to the API, so the frontend always uses relative URLs.
 - `npx tsc --noEmit` must pass before calling a change done.
@@ -90,6 +90,14 @@ WeddingDetailsHub, EditDetailsModal, …) were deleted on 2026-11-09; every rema
   "Partner missing" filter = pairs where only one has answered, or an odd one out with no partner.
 - Socket.IO events from the server: `rsvp:new`, `rsvp:deleted`, `rsvp:restored`. Emit one whenever the API changes rows.
 
+## Backups
+
+- `npm run db:backup` (`scripts/db-backup.sh`) dumps `rsvps`, `admins`, `admin_sessions` to `backups/rsvp-<date>.sql.gz`
+  plus a readable `backups/rsvp-<date>.csv`; keeps 60 days (`KEEP_DAYS`). `backups/` is gitignored (contact numbers).
+- `npm run db:restore [-- file]` (`scripts/db-restore.sh`) restores the newest (or given) dump after typing `YES`;
+  it recreates the database if missing and backs up the current data first. Then `pm2 restart KA-invitation-api`.
+- Daily cron (added by the user): `0 3 * * * <project>/scripts/db-backup.sh >> /var/log/ka-db-backup.log 2>&1`.
+
 ## Testing changes
 
 - Screenshot with headless Edge via `puppeteer-core` (Edge path `C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe`);
@@ -105,9 +113,13 @@ WeddingDetailsHub, EditDetailsModal, …) were deleted on 2026-11-09; every rema
 ## Production
 
 - Live at **https://kevinandarlei.com** (+ `www`), nginx site `/etc/nginx/sites-available/kevinandarlei.com`,
-  Let's Encrypt cert via certbot (auto-renews). `/` → vite preview :2213, `/api` + `/socket.io` → API :3002.
+  Let's Encrypt cert via certbot (auto-renews). `/` → static files in `dist/` (root), `/api` → API :3002.
 - Admin panel: **https://admin.kevinandarlei.com** (+ `www.admin`), nginx site `admin.kevinandarlei.com` →
-  vite preview :2214 (`ADMIN_ONLY`), with its own `/api` + `/socket.io` → :3002. `kevinandarlei.com/admin` 301s there.
+  `dist/admin.html` at `/` (same `dist/` root), with its own `/api` + `/socket.io` → :3002. `kevinandarlei.com/admin`
+  301s there; `/admin` on the admin domain 301s to `/`.
+- **Static serving**: only `KA-invitation-api` runs in pm2 (the old vite-preview web/admin apps were removed to save
+  ~260 MB RAM). `/assets/*` (hashed) is cached 1 year, html/icons/manifests `no-cache`. Pre-switch nginx configs:
+  `/root/nginx-ka-backup-2026-11-11_2118/`.
 - **Admin login** is in the app: `LoginPage` in `AdminApp.tsx` (one screen, no scroll on any device; "Admin Portal / Kevin and Arlei" title, no monogram) →
   `POST /api/admin/login` (`src/server/auth.ts`). Accounts live in MySQL, no passwords in `.env`:
   `admins` (scrypt hash), `admin_sessions` (cookie `ka_admin` holds a random token, the table only its SHA-256; 7 days),
@@ -116,7 +128,9 @@ no lockout and no attempt log (the user asked for both). Manage with `npm run ad
   `requireAdmin` guards every `/api/rsvps` route except the guests' `POST`, and `io.use` refuses sockets without a
   session. Admin fetches go through `adminFetch`, so a 401 drops back to the login page. Any new admin route needs
   `requireAdmin`. The main domain 404s `/api/admin/` and `/socket.io/`.
-- **Domain only**: preview ports 2213/2214 and the API (`RSVP_API_HOST=127.0.0.1` in `ecosystem.config.cjs`) bind to
+- **Domain only**: the API (`RSVP_API_HOST=127.0.0.1` in `ecosystem.config.cjs`) bind to
   `127.0.0.1`, and both nginx 443 blocks `return 444` for any Host that isn't their domain (they're nginx's 443
   fallback, so `https://<IP>` would otherwise show the admin). Local dev leaves `RSVP_API_HOST` unset.
-- Deploy: `npm run build`, then `pm2 restart KA-invitation-web KA-invitation-admin KA-invitation-api`.
+- Deploy: `npm run build` (`scripts/build.sh`: builds into `.dist-next/`, then rsyncs into the live `dist/`, new
+  assets first, old assets kept 7 days) — live immediately, no restart. Server code (`src/server/`):
+  `pm2 restart KA-invitation-api`. Never `vite build` straight into `dist/` (it empties the live folder).
