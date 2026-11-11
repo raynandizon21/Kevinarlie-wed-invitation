@@ -51,6 +51,7 @@ The person working on this writes in Taglish; reply the same way.
 | Admin Entourage panel (RSVP status per entourage name) | `src/AdminEntourage.tsx`, matcher `src/data/entourageMatch.ts` |
 | RSVP API | `src/server/index.ts`, DB pool in `src/server/db.ts` |
 | Schema | `database/rsvp_schema.sql` |
+| Home-screen icons / favicons / manifests (invite: forest K&A "KevinandArlei"; admin: emerald K&A ADMIN "Admin KA") | `public/` + `<head>` of `index.html` / `admin.html` |
 
 The old prev/next story pages and menu hubs (StorySlide, MobileHero, PhotoPage, DetailsPage, InvitationMenuHub,
 WeddingDetailsHub, EditDetailsModal, …) were deleted on 2026-11-09; every remaining component is in use.
