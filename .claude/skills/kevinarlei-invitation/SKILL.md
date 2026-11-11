@@ -27,11 +27,12 @@ The person working on this writes in Taglish; reply the same way.
    opened right after the envelope.
 2. **Phone** (`< 1024px`): ONE long scroll page, `MobileSite.tsx` (no prev/next). Order: photo hero (names in calligraphy) → save-the-date
    (forest, giant `02 02 27` numerals) → invitation (K|A oval monogram, names, date, venues, officiant) →
-   oval-photo countdown → Venues cards + "The Route" map → order of the day (wedding timeline) → Attire guide → Entourage (forest,
-   two columns, italic intro line per group) → FAQs → RSVP (candlelit backdrop) → "Always & Forever" footer.
+   oval-photo countdown → Entourage (forest, two columns, italic intro line per group) → Venues cards ("The Ceremony"
+   first) + "The Route" map → order of the day (wedding timeline) → Attire guide → FAQs → RSVP (candlelit backdrop) → "Always & Forever" footer.
    Big titles use **Italiana** (`font-['Italiana']`); labels are Cormorant caps. Links like `#rsvp` / `?view=rsvp`
    scroll to `m-<section>`.
 3. **Desktop** (`>= 1024px`): one long website, `DesktopSite.tsx` (nav: Details, Entourage | K&A | Timeline, RSVP).
+   Section order matches the phone: countdown → Entourage → Details (ceremony/reception) → Dress code → Timeline → …
 - URLs stay clean (no `#`): the current view lives in `history.state` (`goTo()` in `App.tsx`), so Back/Forward work.
 - After an RSVP is sent: phone shows "Returning to the top in 5…" inside the form, desktop shows `ThanksPage` with the
   same 5-second countdown (`RETURN_SECONDS` in SubPages.tsx); both only scroll to the top, so the music keeps playing.

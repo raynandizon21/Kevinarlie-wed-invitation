@@ -780,6 +780,21 @@ export const MobileSite: React.FC<{
         </motion.div>
       </section>
 
+      {/* ===== 3b. ENTOURAGE: forest, right before the venues (The Ceremony) ===== */}
+      <section id="m-entourage" className="bg-[#102F27] px-3 pb-20 pt-16 text-white">
+        {/* Same hand-lettered "The Entourage" title image as before */}
+        <motion.div {...reveal} className="text-center">
+          <img
+            src={entourageTitleImg}
+            alt="The Entourage"
+            draggable={false}
+            className="mx-auto block h-[clamp(2.5rem,12vw,3.75rem)] w-auto max-w-[min(100%,340px)] select-none object-contain brightness-0 invert"
+          />
+          <Sprig className="mx-auto mt-4 w-14 text-[#78947F]" />
+        </motion.div>
+        <EntourageBlock categories={entourage} />
+      </section>
+
       {/* ===== 4. VENUES (no section title). Ceremony and Reception share one layout: centred Italiana title +
           sprig, the photo with a thin outline frame offset down-left behind it, then the name, time, address and
           a "Get directions" badge. The Ceremony sits on forest green (white text, sage accents), the
@@ -1029,21 +1044,6 @@ export const MobileSite: React.FC<{
             ))}
           </div>
         </motion.div>
-      </section>
-
-      {/* ===== 7. ENTOURAGE: forest ===== */}
-      <section id="m-entourage" className="bg-[#102F27] px-3 pb-20 pt-16 text-white">
-        {/* Same hand-lettered "The Entourage" title image as before */}
-        <motion.div {...reveal} className="text-center">
-          <img
-            src={entourageTitleImg}
-            alt="The Entourage"
-            draggable={false}
-            className="mx-auto block h-[clamp(2.5rem,12vw,3.75rem)] w-auto max-w-[min(100%,340px)] select-none object-contain brightness-0 invert"
-          />
-          <Sprig className="mx-auto mt-4 w-14 text-[#78947F]" />
-        </motion.div>
-        <EntourageBlock categories={entourage} />
       </section>
 
       {/* ===== 8. FAQs ===== */}

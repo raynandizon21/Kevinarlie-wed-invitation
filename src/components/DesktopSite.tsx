@@ -289,6 +289,50 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
         </motion.div>
       </section>
 
+      {/* ================= ENTOURAGE (wedding-program style) ================= */}
+      <section id="section-entourage" className="scroll-mt-20 bg-white pb-28 pt-24">
+        <div className="mx-auto max-w-3xl px-10 text-center">
+          <motion.div {...reveal}>
+            <img src={entourageTitleImg} alt="The Entourage" className="mx-auto h-16 w-auto object-contain" />
+          </motion.div>
+
+          <div className="mt-14">
+            {entourage.map((group, i) => (
+              <motion.div key={group.category} {...reveal}>
+                {i > 0 && (
+                  <div className="my-12 flex items-center justify-center gap-3" aria-hidden>
+                    <span className="h-px w-16 bg-[#B08A4F]/40" />
+                    <span className="h-1.5 w-1.5 rotate-45 bg-[#B08A4F]/70" />
+                    <span className="h-px w-16 bg-[#B08A4F]/40" />
+                  </div>
+                )}
+                <h3 className="font-['Oswald'] text-sm font-light uppercase tracking-[0.45em] text-[#B08A4F]">
+                  {group.category.split('(')[0].trim()}
+                </h3>
+                <div
+                  className={`mx-auto mt-5 grid gap-y-2 ${
+                    group.members.length > 3 ? 'max-w-2xl grid-cols-2 gap-x-10' : 'grid-cols-1'
+                  }`}
+                >
+                  {/* Two columns meet at the centre: left column right-aligned, right column left-aligned */}
+                  {group.members.map((m, i) => (
+                    <div
+                      key={`${m.role}-${m.name}`}
+                      className={`${group.showRoles ? 'pt-2' : ''} ${group.members.length > 3 ? (i % 2 ? 'text-left' : 'text-right') : ''}`}
+                    >
+                      {group.showRoles && (
+                        <p className="text-[10px] uppercase tracking-[0.3em] text-[#78947F]">{m.role}</p>
+                      )}
+                      <p className="font-serif text-2xl leading-snug text-[#102F27]">{m.name}</p>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ================= DETAILS ================= */}
       <section id="section-details" className="scroll-mt-20 bg-white pb-28 pt-24">
         <div className="mx-auto max-w-6xl px-10">
@@ -485,50 +529,6 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
               );
             })}
           </ol>
-        </div>
-      </section>
-
-      {/* ================= ENTOURAGE (wedding-program style) ================= */}
-      <section id="section-entourage" className="scroll-mt-20 bg-white pb-28 pt-24">
-        <div className="mx-auto max-w-3xl px-10 text-center">
-          <motion.div {...reveal}>
-            <img src={entourageTitleImg} alt="The Entourage" className="mx-auto h-16 w-auto object-contain" />
-          </motion.div>
-
-          <div className="mt-14">
-            {entourage.map((group, i) => (
-              <motion.div key={group.category} {...reveal}>
-                {i > 0 && (
-                  <div className="my-12 flex items-center justify-center gap-3" aria-hidden>
-                    <span className="h-px w-16 bg-[#B08A4F]/40" />
-                    <span className="h-1.5 w-1.5 rotate-45 bg-[#B08A4F]/70" />
-                    <span className="h-px w-16 bg-[#B08A4F]/40" />
-                  </div>
-                )}
-                <h3 className="font-['Oswald'] text-sm font-light uppercase tracking-[0.45em] text-[#B08A4F]">
-                  {group.category.split('(')[0].trim()}
-                </h3>
-                <div
-                  className={`mx-auto mt-5 grid gap-y-2 ${
-                    group.members.length > 3 ? 'max-w-2xl grid-cols-2 gap-x-10' : 'grid-cols-1'
-                  }`}
-                >
-                  {/* Two columns meet at the centre: left column right-aligned, right column left-aligned */}
-                  {group.members.map((m, i) => (
-                    <div
-                      key={`${m.role}-${m.name}`}
-                      className={`${group.showRoles ? 'pt-2' : ''} ${group.members.length > 3 ? (i % 2 ? 'text-left' : 'text-right') : ''}`}
-                    >
-                      {group.showRoles && (
-                        <p className="text-[10px] uppercase tracking-[0.3em] text-[#78947F]">{m.role}</p>
-                      )}
-                      <p className="font-serif text-2xl leading-snug text-[#102F27]">{m.name}</p>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
-          </div>
         </div>
       </section>
 
