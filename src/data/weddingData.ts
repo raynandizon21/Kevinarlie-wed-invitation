@@ -384,7 +384,7 @@ export const ENTOURAGE_DATA: EntourageCategory[] = [
     category: 'Secondary Sponsors',
     showRoles: true,
     members: [
-      { role: 'To clothe us as one', name: 'Collene Keley & Josh Keley' },
+      { role: 'To clothe us as one', name: 'Collene Keley & Rommel Karlsen' },
       { role: 'To light our path', name: 'Aezel Jirah Ayson & Miko Carabio' },
       { role: 'To bind us together', name: 'Crizel Salvador & Kenneth Charles Salvador' },
     ],
