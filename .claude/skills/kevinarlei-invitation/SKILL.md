@@ -8,6 +8,20 @@ description: How the Kevin & Arlei wedding invitation is built and how to change
 React 19 + Vite + Tailwind v4 + `motion`, with an Express + Socket.IO RSVP API on MySQL.
 The person working on this writes in Taglish; reply the same way.
 
+## Deploying an update (reminder)
+
+Run from `/var/www/landingpage/events/Kevinarlie-wed-invitation`:
+
+| Changed | Run |
+|---|---|
+| Site or admin page (`src/components/`, `src/AdminApp.tsx`, `src/data/weddingData.ts`, images, CSS) | `npm run build` only |
+| Server / API (`src/server/...`) | `pm2 restart KA-invitation-api` only |
+| Both | `npm run build`, then `pm2 restart KA-invitation-api` |
+
+- Always `npm run build`, never `npx vite build` (that empties the live `dist/` and the site goes down for a moment).
+- `npm run admin:set` (new account / new password) needs no build or restart.
+- If a phone still shows the old version after a build, pull down on the page to refresh.
+
 ## Run
 
 - MySQL (XAMPP) must be running on `localhost:3306`.
