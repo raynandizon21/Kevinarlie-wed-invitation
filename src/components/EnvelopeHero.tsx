@@ -1,21 +1,12 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { ColorPalette } from '../types/wedding';
 import { melodyPlayer } from '../utils/audioSynth';
-import realisticEnvelopeImg from '../assets/images/realistic_envelope_isolated.png';
-import goldSealIsolatedImg from '../assets/images/gold_seal_isolated.png';
+// Green envelope with the gold K&A wax seal already in the photo (KASEAL.jpg cropped to the envelope, 1156x743).
+// Its white corners vanish into the page via mix-blend-multiply.
+import realisticEnvelopeImg from '../assets/images/envelope_ka_seal_hd.jpg';
 
 interface EnvelopeHeroProps {
-  palette: ColorPalette;
   onOpenAndRedirect: () => void;
-  groom?: string;
-  bride?: string;
-  displayDate?: string;
-  churchName?: string;
-  guestName?: string;
-  onToggleMusic?: () => void;
-  isMusicPlaying?: boolean;
-  onOpenSettings?: () => void;
 }
 
 export const EnvelopeHero: React.FC<EnvelopeHeroProps> = ({
@@ -39,7 +30,7 @@ export const EnvelopeHero: React.FC<EnvelopeHeroProps> = ({
 
   return (
     <div
-      className="relative h-full h-[100dvh] max-h-[100dvh] w-full flex flex-col items-center justify-center px-4 py-2 sm:py-6 bg-[#F8F6F1] select-none overflow-hidden touch-none"
+      className="relative h-full h-[100dvh] max-h-[100dvh] w-full flex flex-col items-center justify-center px-0 py-2 sm:py-6 bg-[#F8F6F1] select-none overflow-hidden touch-none"
       style={{
         backgroundImage: `
           radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.9) 0%, transparent 65%),
@@ -48,7 +39,7 @@ export const EnvelopeHero: React.FC<EnvelopeHeroProps> = ({
       }}
     >
       {/* Main Center Stage: 100% REALISTIC ENVELOPE (Perfect Horizontal & Vertical Balance) */}
-      <div className="z-10 flex flex-col items-center justify-center my-auto w-full max-w-[340px] xs:max-w-[360px] sm:max-w-[400px] md:max-w-[450px] px-2">
+      <div className="z-10 flex flex-col items-center justify-center my-auto w-[94vw] max-w-[560px]">
         
         {/* Interactive Realistic Envelope Container - Zero Tilt, Level & Centered */}
         <motion.div
@@ -73,7 +64,7 @@ export const EnvelopeHero: React.FC<EnvelopeHeroProps> = ({
               ? { duration: 0.75, ease: [0.25, 1, 0.5, 1] }
               : { duration: 0.2, ease: 'easeOut' }
           }
-          className="relative w-full aspect-[710/554] max-h-[50dvh] cursor-pointer group flex items-center justify-center mx-auto"
+          className="relative w-full aspect-[1156/743] max-h-[50dvh] cursor-pointer group flex items-center justify-center mx-auto"
         >
           {/* Photorealistic Envelope Shadow - Perfectly Symmetrical */}
           <div
@@ -90,21 +81,18 @@ export const EnvelopeHero: React.FC<EnvelopeHeroProps> = ({
             <img
               src={realisticEnvelopeImg}
               alt="Realistic Dark Green Wedding Envelope"
-              className="w-full h-full object-contain select-none pointer-events-none block filter drop-shadow-md transition-transform duration-300 group-hover:scale-[1.012]"
-              // The PNG has light/beige edges baked around the envelope (top 3px, left ~2px, right ~11px,
-              // bottom 31px of 710x554); trim them so only the green paper shows, with the soft CSS shadow below
-              style={{ clipPath: 'inset(0.8% 1.7% 5.7% 0.6%)' }}
+              className="w-full h-full object-contain select-none pointer-events-none block mix-blend-multiply transition-transform duration-300 group-hover:scale-[1.012]"
               referrerPolicy="no-referrer"
             />
 
-            {/* ANIMATED LUXURY GOLD WAX SEAL (Centered at 50% horizontally, locked to flap apex) */}
+            {/* Glow + light sweep over the K&A seal that is part of the envelope photo (centre ~50% / 59.4%) */}
             <div
               className="absolute pointer-events-none flex items-center justify-center -translate-x-1/2 -translate-y-1/2"
               style={{
                 left: '50%',
-                top: '60.5%',
-                width: '19.7%',
-                height: '25.3%',
+                top: '59.4%',
+                width: '21%',
+                height: '32%',
               }}
             >
               {/* 1. Warm Soft Golden Ambient Aura (subtle, breathing glow) */}
@@ -144,13 +132,6 @@ export const EnvelopeHero: React.FC<EnvelopeHeroProps> = ({
                 }}
                 className="relative w-full h-full flex items-center justify-center rounded-full overflow-hidden"
               >
-                <img
-                  src={goldSealIsolatedImg}
-                  alt="Gold Wax Seal"
-                  className="w-full h-full object-contain pointer-events-none select-none"
-                  referrerPolicy="no-referrer"
-                />
-
                 {/* 3. Diagonal Golden Metallic Sheen / Light Sweep Reflection across the gold surface */}
                 <motion.div
                   animate={{
@@ -171,24 +152,6 @@ export const EnvelopeHero: React.FC<EnvelopeHeroProps> = ({
                   }}
                 />
 
-                {/* 4. Delicate Tiny Diamond Sparkle Glint on the gold crest */}
-                <motion.div
-                  animate={{
-                    opacity: [0, 1, 0],
-                    scale: [0.5, 1.2, 0.5],
-                  }}
-                  transition={{
-                    duration: 1.8,
-                    repeat: Infinity,
-                    repeatDelay: 2.2,
-                    ease: 'easeInOut',
-                  }}
-                  className="absolute top-[24%] left-[28%] w-1.5 h-1.5 rounded-full pointer-events-none"
-                  style={{
-                    background: '#FFFFFF',
-                    boxShadow: '0 0 6px 2px rgba(255, 245, 200, 0.9), 0 0 10px 4px rgba(212, 175, 55, 0.6)',
-                  }}
-                />
               </motion.div>
             </div>
           </div>

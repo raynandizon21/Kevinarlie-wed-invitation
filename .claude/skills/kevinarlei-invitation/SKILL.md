@@ -12,7 +12,8 @@ The person working on this writes in Taglish; reply the same way.
 
 - MySQL (XAMPP) must be running on `localhost:3306`.
 - `npm run dev` starts both processes:
-  - `[web]` Vite on **http://localhost:3213** (invite) and **http://localhost:3213/admin** (admin)
+  - `[web]` Vite on **http://localhost:2213** (invite) and **http://localhost:2213/admin** (admin); PM2 preview serves
+    the admin on its own port 2214 (`ecosystem.config.cjs`)
   - `[api]` `tsx watch src/server/index.ts` on port **3002** (`RSVP_API_PORT`)
 - Vite proxies `/api` and `/socket.io` (websocket) to the API, so the frontend always uses relative URLs.
 - `npx tsc --noEmit` must pass before calling a change done.
@@ -24,12 +25,12 @@ The person working on this writes in Taglish; reply the same way.
 
 1. **Envelope** (`EnvelopeHero.tsx`) — every visit starts here. Old `#details`-style links are read once on load and
    opened right after the envelope.
-2. **Phone** (`< 1024px`): a full-screen **story** in `App.tsx`: MobileHero → Details → Timeline → Entourage → FAQs → RSVP
-   (order in `STORY`). Each page is a `StorySlide` (`StorySlide.tsx`) with its own scroll; swipe up at the bottom or tap
-   "Next ·" (or swipe left/right) to move. No cards menu anymore.
-   Each step has its own transition (`STORY_KIND` in `App.tsx`, variants in `StorySlide.tsx`: rise, push, zoom,
-   circle, wipe) and each page its own look: Details = ivory, each venue a tilted landscape polaroid (whole photo) beside its details (sides alternate), small dress-code section, Timeline = ivory,
-   Entourage = forest page, FAQs = text-only header + numbered questions, RSVP = candlelit photo backdrop. Keep them different from each other.
+2. **Phone** (`< 1024px`): ONE long scroll page, `MobileSite.tsx` (no prev/next). Order: photo hero (names in calligraphy) → save-the-date
+   (forest, giant `02 02 27` numerals) → invitation (K|A oval monogram, names, date, venues, officiant) →
+   oval-photo countdown → Venues cards + "The Route" map → order of the day (wedding timeline) → Attire guide → Entourage (forest,
+   two columns, italic intro line per group) → FAQs → RSVP (candlelit backdrop) → "Always & Forever" footer.
+   Big titles use **Italiana** (`font-['Italiana']`); labels are Cormorant caps. Links like `#rsvp` / `?view=rsvp`
+   scroll to `m-<section>`.
 3. **Desktop** (`>= 1024px`): one long website, `DesktopSite.tsx` (nav: Details, Entourage | K&A | Timeline, RSVP).
 - URLs stay clean (no `#`): the current view lives in `history.state` (`goTo()` in `App.tsx`), so Back/Forward work.
 - `?view=rsvp` is the principal-sponsor link: skips the envelope and submits with `source = 'qr'`.
@@ -40,18 +41,20 @@ The person working on this writes in Taglish; reply the same way.
 |---|---|
 | Names, date, venues, timeline, entourage, FAQs | `src/data/weddingData.ts` |
 | View switching, envelope → hero → menu | `src/App.tsx` |
-| Mobile pages, shared `RsvpForm`, `FaqList`, `DRESS_CODE` | `src/components/SubPages.tsx` |
+| Phone one-page site | `src/components/MobileSite.tsx` |
+| Shared `RsvpForm`, `FaqAccordion`, `TimelineIcon`, `DRESS_CODE` | `src/components/SubPages.tsx` |
 | Desktop website, `Sprig` ornament | `src/components/DesktopSite.tsx` |
 | RSVP admin | `src/AdminApp.tsx` (`admin.html`, served at `/admin`) |
 | RSVP API | `src/server/index.ts`, DB pool in `src/server/db.ts` |
 | Schema | `database/rsvp_schema.sql` |
 
-`InvitationMenuHub`, `CardsHub`, `WeddingDetailsHub`, `RsvpSection`, `EventTimeline`, `FaqSection`, `ColorPaletteSection`, `VenuesSection`,
-`EntourageSection`, `WeddingCountdown`, `DetailsHero`, `TopNavigation` are **unused leftovers** — don't edit them
-expecting a visible change.
+The old prev/next story pages and menu hubs (StorySlide, MobileHero, PhotoPage, DetailsPage, InvitationMenuHub,
+WeddingDetailsHub, EditDetailsModal, …) were deleted on 2026-11-09; every remaining component is in use.
+`GalleryPages.tsx` now only holds the desktop `DesktopPhotoBand` and `ThanksPage`.
 
 ## Design rules
 
+- **Phone page (`MobileSite`) is white + green only**: white `#FFFFFF` backgrounds, Forest/Emerald text and accents, Sage for accents on forest. No ivory or gold there (attire swatches are content and stay brown/champagne).
 - Colors: Ivory `#F2EBDD`, Sage `#78947F`, Emerald `#185844`, Forest `#102F27`, Antique Gold `#B08A4F`
   (light gold accent `#E6D3AE`). Don't introduce other palettes.
 - Fonts (loaded in `index.html`): **The Nautigal** (`font-names`) for the couple names; **Parisienne** for hero taglines; the K&A monogram is Cormorant (serif) with a small script `&`;
@@ -84,4 +87,4 @@ expecting a visible change.
 ## Not done yet
 
 - `/admin` has **no login** — anyone with the link sees names and contact numbers. Add auth before going live.
-- Wedding date/venue/entourage in `weddingData.ts` are still sample data (Dec 14, 2025, Jardin de Josefina).
+- Content in `weddingData.ts` follows the couple's official details doc (Feb 2 2027, San Vicente de Zaragoza Chapel → Nuan Hall). Guest attire = shades of brown/champagne (`DRESS_CODE`), strictly no plus-ones, adults only.

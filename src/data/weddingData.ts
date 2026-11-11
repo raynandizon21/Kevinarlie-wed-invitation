@@ -175,21 +175,44 @@ export interface FaqItem {
 
 export const FAQS_DATA: FaqItem[] = [
   {
-    question: 'Can I bring a plus-one?',
-    category: 'Plus-one',
-    // On the FAQ page, lines starting with "1.", "2."… show as numbered steps
+    question: 'What time should I arrive?',
+    category: 'Arrival',
     answer:
-      'Yes, you can! To add your plus-one in the RSVP:\n1. Choose “Accepts with pleasure”.\n2. Under “Will you bring any guests?”, tap “Yes”.\n3. Type your guest’s full name.\n4. Bringing more than one? Tap “Add another guest” for each person (one name per field).',
+      'We would love for you to arrive and be comfortably seated at San Vicente de Zaragoza Chapel by 2:30 in the afternoon, as the ceremony will begin promptly at 3:00 PM.\nWe would appreciate it if you could join us at the ceremony, not just the reception. It is the most important part of our wedding, and sharing that moment with you would mean so much.',
   },
   {
-    question: 'What is the "Unplugged Ceremony" policy?',
+    question: 'Is there a dress code?',
+    category: 'Dress code',
+    answer:
+      'Yes. We kindly request our guests to come in formal or semi-formal attire in soft, warm tones (caramel, nude, dusty rose and blush) to make this occasion truly special. Ladies are invited to wear Filipiniana inspired attire, while gentlemen are asked to come in a short sleeve or long sleeve Barong Tagalog.',
+  },
+  {
+    question: 'What happens after the ceremony?',
+    category: 'Reception',
+    answer: 'Feel free to head straight to the reception venue and enjoy a delightful cocktail hour at Nuan Hall, Nuan Farm & Resort.',
+  },
+  {
+    question: 'Will parking be available?',
+    category: 'Parking',
+    answer: 'You’ll find plenty of parking at both the ceremony and reception venues for your convenience.',
+  },
+  {
+    question: 'How do I RSVP, and when is the deadline?',
+    category: 'RSVP',
+    answer:
+      'To RSVP, please open the RSVP tab on our website and enter your name. Kindly respond by January 2, 2027. Any RSVP received after this date will be marked as declined, as we will be submitting the final headcount to our vendors after the deadline.\nEvery seat is reserved with love: only guests with a confirmed RSVP will be accommodated at the venue. Strictly no plus-ones. Thank you for your understanding.',
+  },
+  {
+    question: 'What is the "Unplugged Ceremony"?',
     category: 'Unplugged ceremony',
-    answer: 'We kindly ask everyone to put their phones away during the ceremony so it stays intimate and our photographers and videographers have a clear view.',
+    answer:
+      'As we enter the sacred moment, we humbly ask for an unplugged ceremony and for you to be fully present with us. Please set aside your devices until we exchange our vows. After the ceremony, feel free to capture photos and share the joy with us.',
   },
   {
-    question: 'Do you have a gift guide?',
-    category: 'Gifts',
-    answer: 'Your presence and prayers are the greatest gift. If you wish to give something, a monetary gift for our new beginning would be sincerely appreciated.',
+    question: 'Can I bring my children?',
+    category: 'Adults-only',
+    answer:
+      'We truly love your children, but for our special day we want to keep it intimate, so we have decided to host an adults-only celebration. Please avoid sharing this invitation.',
   },
 ];
 
@@ -202,14 +225,24 @@ export const WEDDING_DETAILS = {
   displayDate: 'Tuesday, February 2, 2027',
   ceremonyTime: '3:00 PM',
   churchName: 'San Vicente de Zaragoza Chapel',
-  churchAddress: '2M33+8FG, Bacolor, Pampanga',
-  receptionName: 'Nuan Farm & Resort',
-  receptionAddress: 'Nuan Pavilion · XMX4+QH, Bacolor, Pampanga',
+  churchAddress: '2M33+8FG, Bacolor, Pampanga, Philippines',
+  officiant: 'Fr. John Michael M. Guilleno',
+  receptionName: 'Nuan Hall',
+  receptionAddress: 'Nuan Farm & Resort · XMX4+QH, Bacolor, Pampanga',
   wazeChurchUrl: 'https://waze.com/ul?q=San+Vicente+de+Zaragoza+Chapel+Bacolor+Pampanga',
   mapsChurchUrl: 'https://maps.google.com/?q=2M33%2B8FG+Bacolor+Pampanga',
   mapsReceptionUrl: 'https://maps.google.com/?q=XMX4%2BQH+Bacolor+Pampanga',
   bibleVerse: '"Above all, love each other deeply, because love covers over a multitude of sins." — 1 Peter 4:8',
   rsvpDeadline: 'January 2, 2027',
+};
+
+// Gift guide: its own page after the FAQs (phone and desktop)
+export const GIFT_NOTE = {
+  title: 'Gift Guide',
+  lines: [
+    'Your presence is the greatest gift we could ask for.',
+    'Should you wish to give, a financial contribution toward our new beginning would be deeply appreciated.',
+  ],
 };
 
 export const TIMELINE: TimelineItem[] = [
@@ -329,7 +362,7 @@ export const ENTOURAGE_DATA: EntourageCategory[] = [
       { role: 'Bridesmaid', name: 'Aldane Pauline Gonzales' },
       { role: 'Groomsman', name: 'Alaine Gonzales' },
       { role: 'Bridesmaid', name: 'Keisha Layug' },
-      { role: 'Groomsman', name: 'John Brozas' },
+      { role: 'Groomsman', name: 'Aaron Romero' },
       { role: 'Bridesmaid', name: 'Norelle Laine Chavez' },
       { role: 'Groomsman', name: 'Anton Valdez' },
       { role: 'Bridesmaid', name: 'Elaine Capati' },
@@ -338,18 +371,18 @@ export const ENTOURAGE_DATA: EntourageCategory[] = [
       { role: 'Groomsman', name: 'Pio Schuster' },
       { role: 'Bridesmaid', name: 'Jorgina Ele' },
       { role: 'Groomsman', name: 'Oliver Layug' },
-      { role: 'Bridesmaid', name: 'Cristine Pasion' },
+      { role: 'Bridesmaid', name: 'Cristine Pasion-Santos' },
       { role: 'Groomsman', name: 'Dustine Mayos' },
-      { role: 'Bridesmaid', name: 'Melaine Ordono' },
+      { role: 'Bridesmaid', name: 'Melaine Ordono-Castro' },
     ],
   },
   {
     category: 'Secondary Sponsors',
     showRoles: true,
     members: [
-      { role: 'Candle', name: 'Aezel Jirah Ayson & Miko Carabio' },
-      { role: 'Veil', name: 'Collene Keley & Josh Keley' },
-      { role: 'Cord', name: 'Crizel Salvador & Kenneth Charles Salvador' },
+      { role: 'To clothe us as one', name: 'Collene Keley & Josh Keley' },
+      { role: 'To light our path', name: 'Aezel Jirah Ayson & Miko Carabio' },
+      { role: 'To bind us together', name: 'Crizel Salvador & Kenneth Charles Salvador' },
     ],
   },
   {

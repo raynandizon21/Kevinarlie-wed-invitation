@@ -1,16 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { Navigation, Plus } from 'lucide-react';
+import { MapPin, Plus } from 'lucide-react';
 import { EntourageCategory, TimelineItem } from '../types/wedding';
-import { DRESS_CODE, FaqAccordion, RsvpForm, TimelineIcon } from './SubPages';
+import { GIFT_NOTE, WEDDING_DETAILS } from '../data/weddingData';
+import { directionsUrl, DRESS_CODE, FaqAccordion, GUEST_ATTIRE, RsvpForm, TimelineIcon } from './SubPages';
 import { DesktopPhotoBand, ThanksPage } from './GalleryPages';
 import { Sprig } from './Sprig';
-import jardinVenueImg from '../assets/images/jardin_venue_1791676573787.jpg';
+import { RouteMap, useCountdown } from './MobileSite';
 import churchImg from '../assets/images/CHRURCH.jpg';
-import meadowCoupleImg from '../assets/images/wedding_couple_meadow_1791602914531.jpg';
+// Prenup photo: city walk (landscape), fits the full-width hero
+import heroCoupleImg from '../assets/images/image2.jpeg';
 // Left half of the original two-photo image, so there's no seam line down the middle
 import tablescapeImg from '../assets/images/wedding_tablescape_candlelight_single.jpg';
+// Reception venue photo: Nuan Hall, Nuan Farm & Resort
+import nuanHallImg from '../assets/images/NUANHALL.jpg';
 import entourageTitleImg from '../assets/images/the_entourage_title.svg';
+// Faded background behind the wedding timeline: the couple from above
+import timelineBgImg from '../assets/images/image1-copy.jpeg';
 import weddingTimelineTitleImg from '../assets/images/wedding_timeline_emerald.svg';
 import weddingAttireTitleImg from '../assets/images/wedding_attire_hd_forest.png';
 
@@ -136,9 +142,12 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
   const navText = `text-[12px] uppercase tracking-[0.22em] ${scrolled ? 'text-[#102F27]/75' : 'text-white'}`;
   const navLink = 'py-2 hover:opacity-70 transition-opacity cursor-pointer';
 
+  // Countdown to the ceremony, from the shared wedding data
+  const cd = useCountdown(WEDDING_DETAILS.weddingDate);
+
   const venues = [
-    { label: 'Ceremony', name: churchName, address: churchAddress, time: ceremonyTime, img: churchImg, url: mapsChurchUrl },
-    { label: 'Reception', name: receptionName, address: receptionAddress, img: tablescapeImg, url: mapsReceptionUrl },
+    { label: 'Ceremony', name: churchName, address: churchAddress, time: ceremonyTime, img: churchImg, url: mapsChurchUrl, note: `Officiated by ${WEDDING_DETAILS.officiant}` },
+    { label: 'Reception', name: receptionName, address: receptionAddress, time: 'After the ceremony', img: nuanHallImg, url: mapsReceptionUrl, note: '' },
   ];
 
   return (
@@ -188,23 +197,28 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
       {/* ================= HERO (full-bleed photo, centered names) ================= */}
       <section className="relative h-screen min-h-[640px] overflow-hidden">
         <motion.img
-          src={meadowCoupleImg}
+          src={heroCoupleImg}
           alt={`${groomName} and ${brideName}`}
-          initial={{ scale: 1.08 }}
-          animate={{ scale: 1 }}
+          // Zoomed in from the right so the passer-by at the photo's bottom-left edge is cropped out
+          initial={{ scale: 1.32 }}
+          animate={{ scale: 1.22 }}
           transition={{ duration: 2.4, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute inset-0 h-full w-full object-cover object-[center_40%]"
+          style={{ transformOrigin: '88% 85%' }}
+          className="absolute inset-0 h-full w-full object-cover object-[center_85%]"
         />
         <div className="absolute inset-0 bg-[#102F27]/25" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,47,39,0.45)_0%,transparent_65%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_75%_50%,rgba(16,47,39,0.5)_0%,transparent_60%)]" />
         <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/35 to-transparent" />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.2, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="relative flex h-full flex-col items-center justify-center px-6 pt-16 text-center text-white"
+          className="relative h-full text-white"
         >
+          {/* Names are centred on the dark bridge (about 75% across at any width), so the couple
+              (left of centre in the photo) stays clear and the block never hugs the screen edge */}
+          <div className="absolute left-[75%] top-[54%] flex -translate-x-1/2 -translate-y-1/2 flex-col items-center whitespace-nowrap text-center">
           <p className="font-['Parisienne'] text-[2rem] text-white/95 drop-shadow">our wedding story</p>
           {/* Couple names in calligraphy */}
           <h1 className="mt-6 font-names font-normal leading-[0.95] drop-shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
@@ -215,6 +229,7 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
           </h1>
           <p className="mt-4 font-['Parisienne'] text-[2rem] text-white/95 drop-shadow">hope you&apos;ll celebrate with us</p>
           <Sprig className="mt-5 w-20 text-white/85" />
+          </div>
         </motion.div>
 
         {/* Diagonal cut into the next section */}
@@ -231,7 +246,9 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
           <p className="my-2 font-script text-3xl text-[#B08A4F]">to</p>
           <p className="font-['Oswald'] text-[2rem] font-light uppercase tracking-[0.6em] text-[#102F27]">Join in the Celebration</p>
           <Sprig className="mx-auto mt-4 w-16 text-[#185844]/70" />
-          <p className="mt-8 text-xs uppercase tracking-[0.45em] text-[#185844]">{displayDate}</p>
+          <p className="mt-8 text-xs uppercase tracking-[0.45em] text-[#185844]">
+            {displayDate} · {ceremonyTime}
+          </p>
           <p className="mt-2 text-xs uppercase tracking-[0.45em] text-[#78947F]">{churchName}</p>
           <div className="mt-10 flex items-center justify-center gap-3">
             <button
@@ -248,6 +265,26 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
             >
               RSVP
             </button>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ================= COUNTDOWN (same as the phone) ================= */}
+      <section className="bg-[#102F27] py-16 text-center text-white">
+        <motion.div {...reveal}>
+          <p className="font-['Parisienne'] text-[2.2rem]">we&rsquo;re getting married in</p>
+          <div className="mx-auto mt-6 grid max-w-2xl grid-cols-4">
+            {[
+              [cd.days, 'Days'],
+              [cd.hours, 'Hours'],
+              [cd.minutes, 'Minutes'],
+              [cd.seconds, 'Seconds'],
+            ].map(([v, l], i) => (
+              <div key={l} className={`flex flex-col items-center ${i ? 'border-l border-white/25' : ''}`}>
+                <span className="font-['Italiana'] text-6xl leading-none tabular-nums lining-nums">{String(v).padStart(2, '0')}</span>
+                <span className="mt-3 font-['Oswald'] text-xs font-light uppercase tracking-[0.3em] text-[#78947F]">{l}</span>
+              </div>
+            ))}
           </div>
         </motion.div>
       </section>
@@ -270,18 +307,24 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
                 <h3 className="mt-3 font-serif text-3xl text-[#102F27]">{v.name}</h3>
                 <p className="mt-3 text-sm text-stone-500">{v.address}</p>
                 {v.time && <p className="mt-2 font-['Oswald'] text-base font-light uppercase tracking-[0.3em] text-[#185844]">{v.time}</p>}
+                {v.note && <p className="mt-2 font-serif text-lg italic text-[#102F27]/75">{v.note}</p>}
                 <a
-                  href={v.url}
+                  href={directionsUrl(v.url)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-6 inline-flex items-center gap-2 border-b border-[#185844]/40 pb-1 font-['Oswald'] text-xs font-light uppercase tracking-[0.4em] text-[#185844] hover:border-[#185844] transition-colors"
+                  className="group mt-7 inline-flex items-center gap-3 border border-[#185844]/60 px-7 py-3.5 font-serif text-xs font-bold uppercase tracking-[0.3em] text-[#185844] transition-colors hover:bg-[#185844] hover:text-white"
                 >
-                  <Navigation className="h-3.5 w-3.5" />
+                  {/* same outlined button as the phone */}
+                  <MapPin className="h-4 w-4" strokeWidth={1.5} />
                   Get directions
+                  <span className="transition-transform group-hover:translate-x-1">&rarr;</span>
                 </a>
               </motion.div>
             ))}
           </div>
+
+          {/* Plan your arrival: same route map + arrival time as the phone */}
+          <RouteMap wide from={{ name: churchName, url: mapsChurchUrl }} to={{ name: receptionName, url: mapsReceptionUrl }} />
         </div>
       </section>
 
@@ -289,16 +332,37 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
       <section className="bg-[#F2EBDD] py-28">
         <motion.div {...reveal} className="mx-auto max-w-3xl px-10 text-center">
           <h2>
-            <img
-              src={weddingAttireTitleImg}
-              alt="Wedding Attire"
-              draggable={false}
-              className="mx-auto block h-auto w-[30rem] max-w-full select-none"
+            {/* The title PNG used as a mask over emerald, so it shows green instead of near-black forest */}
+            <span
+              role="img"
+              aria-label="Wedding Attire"
+              className="mx-auto block w-[30rem] max-w-full aspect-[2051/610] bg-[#185844]"
+              style={{
+                WebkitMaskImage: `url(${weddingAttireTitleImg})`,
+                maskImage: `url(${weddingAttireTitleImg})`,
+                WebkitMaskSize: 'contain',
+                maskSize: 'contain',
+                WebkitMaskRepeat: 'no-repeat',
+                maskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'center',
+                maskPosition: 'center',
+              }}
             />
           </h2>
-          <p className="mx-auto mt-6 max-w-xl font-serif text-xl leading-relaxed text-[#102F27]/80">
-            We would love to see you dressed in formal attire in the colors of our day. Kindly avoid white and ivory.
+          {/* Same words as the phone */}
+          <p className="mt-8 font-['Oswald'] text-3xl font-light uppercase tracking-[0.35em] text-[#185844]">Guests</p>
+          <p className="mx-auto mt-4 max-w-xl font-serif text-xl italic leading-relaxed text-[#185844]/80">
+            We can&rsquo;t wait to see you all dressed up. Come in your best and share in the joy of our special day.
           </p>
+          <p className="mt-8 font-serif text-sm font-semibold uppercase tracking-[0.3em] text-[#185844]">Formal or Semi-Formal</p>
+          <div className="mt-4 space-y-1.5 font-serif text-lg text-[#185844]">
+            <p>
+              <span className="font-bold">Ladies</span> &middot; Filipiniana Inspired Attire
+            </p>
+            <p>
+              <span className="font-bold">Gentlemen</span> &middot; Short or Long Sleeve Barong Tagalog
+            </p>
+          </div>
           <div className="mx-auto mt-12 grid max-w-2xl grid-cols-4 gap-5">
             {DRESS_CODE.map((c, i) => (
               <motion.div
@@ -316,13 +380,60 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
             ))}
           </div>
         </motion.div>
+        {/* Guest attire board (all looks in one image) */}
+        <div className="mx-auto mt-16 max-w-5xl px-10">
+          {GUEST_ATTIRE.map((a, i) => (
+            <motion.figure
+              {...reveal}
+              transition={{ ...reveal.transition, delay: i * 0.15 }}
+              key={a.label}
+              className="text-center"
+            >
+              {/* Cream board: all four edges fade into the ivory section (outer = left/right, image = top/bottom) */}
+              <a
+                href={a.img}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+                style={{
+                  WebkitMaskImage: 'linear-gradient(to right, transparent, #000 8%, #000 92%, transparent)',
+                  maskImage: 'linear-gradient(to right, transparent, #000 8%, #000 92%, transparent)',
+                }}
+              >
+                <img
+                  src={a.img}
+                  alt={a.alt}
+                  loading="lazy"
+                  className="block w-full mix-blend-multiply"
+                  style={{
+                    WebkitMaskImage: 'linear-gradient(to bottom, transparent, #000 12%, #000 90%, transparent)',
+                    maskImage: 'linear-gradient(to bottom, transparent, #000 12%, #000 90%, transparent)',
+                  }}
+                />
+              </a>
+            </motion.figure>
+          ))}
+        </div>
       </section>
 
-      <DesktopPhotoBand photo={0} groomName={groomName} brideName={brideName} />
-
       {/* ================= TIMELINE ================= */}
-      <section id="section-timeline" className="scroll-mt-20 bg-white pb-28 pt-20">
-        <div className="mx-auto max-w-5xl px-10 text-[#102F27]">
+      <section id="section-timeline" className="relative scroll-mt-20 overflow-hidden bg-white pb-28 pt-20">
+        {/* Faded photo behind the timeline: the couple from above, very light, washed with white and melting into
+            the page at the top and bottom so the green text stays readable */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <img
+            src={timelineBgImg}
+            alt=""
+            draggable={false}
+            className="h-full w-full object-cover object-[50%_40%] opacity-[0.22] grayscale-[35%]"
+            style={{
+              WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, #000 22%, #000 78%, transparent 100%)',
+              maskImage: 'linear-gradient(to bottom, transparent 0%, #000 22%, #000 78%, transparent 100%)',
+            }}
+          />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_50%,rgba(255,255,255,0.55)_0%,transparent_80%)]" />
+        </div>
+        <div className="relative mx-auto max-w-5xl px-10 text-[#102F27]">
           {/* Same design as the mobile Timeline page: hand-lettered title, couple line, center rail with line icons */}
           <motion.div {...reveal} className="text-center">
             <img
@@ -376,8 +487,6 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
           </ol>
         </div>
       </section>
-
-      <DesktopPhotoBand photo={1} groomName={groomName} brideName={brideName} />
 
       {/* ================= ENTOURAGE (wedding-program style) ================= */}
       <section id="section-entourage" className="scroll-mt-20 bg-white pb-28 pt-24">
@@ -444,11 +553,22 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
         </div>
       </section>
 
+      {/* ================= GIFT GUIDE (forest band after the FAQs) ================= */}
+      <section className="bg-[#102F27] py-24 text-center text-white">
+        <motion.div {...reveal} className="mx-auto max-w-3xl px-10">
+          <p className="font-script text-3xl text-[#E6D3AE]">with gratitude</p>
+          <h2 className="mt-2 font-['Oswald'] text-4xl font-light uppercase tracking-[0.35em]">{GIFT_NOTE.title}</h2>
+          <Sprig className="mx-auto mt-4 w-16 text-[#78947F]" />
+          <p className="mt-8 font-['Parisienne'] text-[2.2rem] leading-snug">{GIFT_NOTE.lines[0]}</p>
+          <p className="mx-auto mt-4 max-w-xl font-serif text-xl italic leading-relaxed text-white/80">{GIFT_NOTE.lines[1]}</p>
+        </motion.div>
+      </section>
+
       {/* ================= RSVP (photo band) ================= */}
       <section id="section-rsvp" className="scroll-mt-20 relative overflow-hidden py-36">
         <img src={tablescapeImg} alt="" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-[#102F27]/75" />
-        <Diagonal edge="top" fill="#F2EBDD" />
+        <Diagonal edge="top" fill="#102F27" />
         <div className="relative mx-auto grid max-w-6xl grid-cols-2 items-center gap-20 px-10">
           <motion.div {...reveal} className="text-center text-white">
             <p className="font-script text-3xl text-[#E6D3AE]">kindly respond</p>
@@ -458,7 +578,12 @@ export const DesktopSite: React.FC<DesktopSiteProps> = ({
               join us?
             </h2>
             <Sprig className="mx-auto mt-5 w-16 text-white/80" />
-            <p className="mt-5 font-['Oswald'] text-sm font-light uppercase tracking-[0.4em] text-white/75">by {rsvpDeadline}</p>
+            {/* Same note as the phone page */}
+            <p className="mx-auto mt-5 max-w-sm font-serif text-lg leading-relaxed text-white/85">
+              Every seat is reserved with love. Kindly respond by <strong className="font-semibold text-white">{rsvpDeadline}</strong>. Only
+              guests with a confirmed RSVP will be accommodated at the venue.
+            </p>
+            <p className="mt-4 font-['Oswald'] text-sm font-light uppercase tracking-[0.4em] text-white">Strictly no plus-ones</p>
           </motion.div>
           <motion.div {...reveal} className="bg-white p-10 shadow-2xl">
             <p className="mb-6 text-center font-['Oswald'] text-lg font-light uppercase tracking-[0.45em] text-[#102F27]">RSVP</p>

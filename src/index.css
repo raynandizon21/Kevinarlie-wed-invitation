@@ -125,3 +125,9 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #78947F;
 }
+
+/* Save-the-date numerals: one soft light sweep */
+@keyframes m-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: 0% 0; }
+}
