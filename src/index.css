@@ -131,3 +131,9 @@
   from { background-position: 100% 0; }
   to { background-position: 0% 0; }
 }
+
+/* Edge/IE draw their own reveal (eye) and clear (x) buttons in password fields; the admin login has its own eye */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}

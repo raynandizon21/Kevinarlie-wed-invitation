@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { Sprig } from './Sprig';
+import { RETURN_SECONDS } from './SubPages';
 // Prenup photos: colonnade walk (portrait), crosswalk from above (landscape), city walk (landscape)
 import colonnadeImg from '../assets/images/image0.jpeg';
 import crosswalkImg from '../assets/images/image1.jpeg';
@@ -102,11 +103,16 @@ export const ThanksPage: React.FC<{
   displayDate: string;
   autoReturn?: boolean;
 }> = ({ onRestart, groomName, brideName, displayDate, autoReturn = false }) => {
+  // After the RSVP: count down RETURN_SECONDS, then back to the beginning (scroll only; the music keeps playing)
+  const [secondsLeft, setSecondsLeft] = useState(RETURN_SECONDS);
+  const restartRef = useRef(onRestart);
+  restartRef.current = onRestart;
   useEffect(() => {
     if (!autoReturn) return;
-    const t = window.setTimeout(onRestart, 8000);
+    if (secondsLeft <= 0) return restartRef.current();
+    const t = window.setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
     return () => window.clearTimeout(t);
-  }, [autoReturn, onRestart]);
+  }, [autoReturn, secondsLeft]);
 
   return (
     <div className="relative min-h-[100dvh] bg-[#F2EBDD] text-[#102F27]">
@@ -142,6 +148,11 @@ export const ThanksPage: React.FC<{
         >
           Back to the beginning
         </button>
+        {autoReturn && (
+          <p className="mt-3 font-serif text-sm text-[#102F27]/60" aria-live="polite">
+            Returning in <span className="font-semibold tabular-nums text-[#185844]">{Math.max(0, secondsLeft)}</span>…
+          </p>
+        )}
       </motion.div>
     </div>
   );

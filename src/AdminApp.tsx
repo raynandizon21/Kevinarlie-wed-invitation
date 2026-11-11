@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Archive, Check, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Pencil, RotateCcw, Search, Trash2, X } from 'lucide-react';
+import { Archive, Check, ChevronDown, ChevronLeft, ChevronRight, Eye, EyeOff, LogOut, MoreVertical, Pencil, RotateCcw, Search, Trash2, Users, X } from 'lucide-react';
 import { io } from 'socket.io-client';
+import AdminEntourage from './AdminEntourage';
 
 // RSVP admin panel (ported from the wedding-invitation project, Kevin & Arlei colors)
 
@@ -282,7 +283,157 @@ const RowMenu: React.FC<{ name: string; onEdit: () => void; onDelete: () => void
   );
 };
 
+// Every admin API call: a 401 means the session expired, so go back to the login page
+class SignedOut extends Error {}
+async function adminFetch(url: string, init?: RequestInit): Promise<Response> {
+  const response = await fetch(url, init);
+  if (response.status === 401) throw new SignedOut();
+  return response;
+}
+
+type AuthState = 'checking' | 'signedOut' | 'signedIn';
+
 export default function AdminApp() {
+  const [auth, setAuth] = useState<AuthState>('checking');
+
+  useEffect(() => {
+    fetch('/api/admin/session')
+      .then((r) => r.json())
+      .then((d: { signedIn?: boolean }) => setAuth(d.signedIn ? 'signedIn' : 'signedOut'))
+      .catch(() => setAuth('signedOut'));
+  }, []);
+
+  const signOut = async () => {
+    await fetch('/api/admin/logout', { method: 'POST' }).catch(() => undefined);
+    setAuth('signedOut');
+  };
+
+  if (auth === 'checking') return <div className="h-[100dvh] bg-white" />;
+  if (auth === 'signedOut') return <LoginPage onSignedIn={() => setAuth('signedIn')} />;
+  return <AdminPanel onSignOut={signOut} onExpired={() => setAuth('signedOut')} />;
+}
+
+// Field with its label inside the box; the label shrinks to the top once there's text
+const LoginField: React.FC<{
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  autoComplete: string;
+  autoFocus?: boolean;
+  trailing?: React.ReactNode;
+}> = ({ label, value, onChange, type = 'text', autoComplete, autoFocus, trailing }) => (
+  <label className="relative block">
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      autoComplete={autoComplete}
+      autoCapitalize="none"
+      autoCorrect="off"
+      spellCheck={false}
+      autoFocus={autoFocus}
+      placeholder=" "
+      className={`peer h-[clamp(2.9rem,7.5dvh,3.4rem)] w-full rounded-2xl border border-[#185844]/20 bg-white px-4 pb-1.5 pt-5 text-base text-[#102F27] outline-none transition-colors focus:border-[#185844] focus:ring-2 focus:ring-[#185844]/15 ${trailing ? 'pr-12' : ''}`}
+    />
+    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[15px] text-stone-400 transition-all peer-focus:top-[0.95rem] peer-focus:text-[11px] peer-[:not(:placeholder-shown)]:top-[0.95rem] peer-[:not(:placeholder-shown)]:text-[11px]">
+      {label}
+    </span>
+    {trailing}
+  </label>
+);
+
+const LoginPage: React.FC<{ onSignedIn: () => void }> = ({ onSignedIn }) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username.trim() || !password) return setError('Please enter your username and password.');
+    try {
+      setBusy(true);
+      setError('');
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), password }),
+      });
+      if (response.ok) return onSignedIn();
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      setError(data.error || 'Could not sign in. Please try again.');
+      setPassword('');
+    } catch {
+      setError('Could not reach the server. Please try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    // Full-screen, app-style: "Admin Portal / Kevin and Arlei" title over the form, fits one screen without scrolling
+    <div className="flex h-[100dvh] flex-col items-center justify-center overflow-hidden bg-white px-5 pb-[max(clamp(0.5rem,2.5dvh,1.25rem),env(safe-area-inset-bottom))] pt-[max(clamp(0.5rem,2dvh,0.9rem),env(safe-area-inset-top))] text-[#102F27] font-sans">
+      <motion.form
+        onSubmit={submit}
+        noValidate
+        className="flex min-h-0 w-full max-w-[22rem] flex-1 flex-col justify-center py-[clamp(0.5rem,4dvh,2.5rem)]"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+      >
+        {/* Title in place of a logo */}
+        <div className="mb-[clamp(1rem,7dvh,3.5rem)] shrink-0 text-center">
+          <h1 className="font-serif text-[clamp(1.75rem,5.5dvh,2.5rem)] leading-none text-[#102F27]">Admin Portal</h1>
+          <p className="mt-[clamp(0.25rem,1dvh,0.5rem)] text-[clamp(0.625rem,1.5dvh,0.75rem)] font-semibold uppercase tracking-[0.3em] text-[#78947F]">
+            Kevin and Arlei
+          </p>
+        </div>
+
+        <div className="space-y-[clamp(0.375rem,1.3dvh,0.625rem)]">
+          <LoginField label="Username" value={username} onChange={setUsername} autoComplete="username" autoFocus />
+          <LoginField
+            label="Password"
+            value={password}
+            onChange={setPassword}
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="current-password"
+            trailing={
+              password && (
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-2.5 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full text-stone-400 hover:bg-[#E9F1EC] hover:text-[#185844] cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+                </button>
+              )
+            }
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={busy}
+          className="mt-[clamp(0.5rem,1.5dvh,0.75rem)] h-[clamp(2.75rem,6.5dvh,3rem)] w-full shrink-0 rounded-full bg-[#185844] text-[15px] font-semibold text-white hover:bg-[#102F27] disabled:opacity-60 transition-colors cursor-pointer"
+        >
+          {busy ? 'Logging in…' : 'Log in'}
+        </button>
+
+        {error && (
+          <p role="alert" className="mt-[clamp(0.5rem,2dvh,1rem)] text-center text-sm text-red-600">
+            {error}
+          </p>
+        )}
+      </motion.form>
+
+    </div>
+  );
+};
+
+function AdminPanel({ onSignOut, onExpired }: { onSignOut: () => void; onExpired: () => void }) {
   const [rsvps, setRsvps] = useState<RsvpRow[]>([]);
   const [error, setError] = useState('');
   // RSVP waiting for confirmation in the remove pop-up
@@ -291,6 +442,8 @@ export default function AdminApp() {
   const [loading, setLoading] = useState(true);
   // Archive (soft-deleted RSVPs) panel
   const [archiveOpen, setArchiveOpen] = useState(false);
+  // Entourage panel (names from weddingData.ts, colored by their RSVP)
+  const [entourageOpen, setEntourageOpen] = useState(false);
   const [archived, setArchived] = useState<RsvpRow[]>([]);
   const [archiveLoading, setArchiveLoading] = useState(false);
   const [restoringId, setRestoringId] = useState<number | null>(null);
@@ -312,11 +465,12 @@ export default function AdminApp() {
     if (!g) return;
     try {
       setDeleting(true);
-      const response = await fetch(`/api/rsvps/${g.id}`, { method: 'DELETE' });
+      const response = await adminFetch(`/api/rsvps/${g.id}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete');
       setRsvps((prev) => prev.filter((r) => r.id !== g.id));
       setPendingDelete(null);
     } catch (err) {
+      if (err instanceof SignedOut) return onExpired();
       console.error(err);
       setError('Could not remove that RSVP. Please try again.');
       setPendingDelete(null);
@@ -342,7 +496,7 @@ export default function AdminApp() {
     try {
       setSaving(true);
       setEditError('');
-      const response = await fetch(`/api/rsvps/${d.row.id}`, {
+      const response = await adminFetch(`/api/rsvps/${d.row.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -357,6 +511,7 @@ export default function AdminApp() {
       setRsvps((prev) => prev.map((r) => (r.id === row.id ? row : r)));
       setEditDraft(null);
     } catch (err) {
+      if (err instanceof SignedOut) return onExpired();
       setEditError(err instanceof Error ? err.message : 'Could not save the changes.');
     } finally {
       setSaving(false);
@@ -385,10 +540,11 @@ export default function AdminApp() {
   const fetchArchived = async () => {
     try {
       setArchiveLoading(true);
-      const response = await fetch('/api/rsvps/archived');
+      const response = await adminFetch('/api/rsvps/archived');
       if (!response.ok) throw new Error('Failed to fetch archive');
       setArchived(await response.json());
     } catch (err) {
+      if (err instanceof SignedOut) return onExpired();
       console.error(err);
     } finally {
       setArchiveLoading(false);
@@ -399,7 +555,7 @@ export default function AdminApp() {
   const restoreRsvp = async (g: RsvpRow) => {
     try {
       setRestoringId(g.id);
-      const response = await fetch(`/api/rsvps/${g.id}/restore`, { method: 'PATCH' });
+      const response = await adminFetch(`/api/rsvps/${g.id}/restore`, { method: 'PATCH' });
       if (!response.ok) throw new Error('Failed to restore');
       const row = (await response.json()) as RsvpRow;
       setArchived((prev) => prev.filter((r) => r.id !== g.id));
@@ -409,6 +565,7 @@ export default function AdminApp() {
         )
       );
     } catch (err) {
+      if (err instanceof SignedOut) return onExpired();
       console.error(err);
       setError('Could not restore that RSVP. Please try again.');
     } finally {
@@ -419,10 +576,11 @@ export default function AdminApp() {
   const fetchRsvps = async () => {
     try {
       setError('');
-      const response = await fetch('/api/rsvps');
+      const response = await adminFetch('/api/rsvps');
       if (!response.ok) throw new Error('Failed to fetch data');
       setRsvps(await response.json());
     } catch (err) {
+      if (err instanceof SignedOut) return onExpired();
       console.error(err);
       setError('Could not load guest list. Make sure the RSVP server is running.');
     } finally {
@@ -436,6 +594,10 @@ export default function AdminApp() {
     const socket = io({ path: '/socket.io' });
     socket.on('connect', () => {
       fetchRsvps();
+    });
+    // The server refuses the socket when the session has expired
+    socket.on('connect_error', (err) => {
+      if (err.message === 'unauthorized') onExpired();
     });
     socket.on('rsvp:new', (row: RsvpRow) => {
       setRsvps((prev) => (prev.some((g) => g.id === row.id) ? prev : [row, ...prev]));
@@ -523,17 +685,39 @@ export default function AdminApp() {
       <main className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-3 px-[clamp(0.75rem,4vw,1.5rem)] py-3 sm:gap-4 sm:py-5">
         <div className="flex shrink-0 items-center justify-between gap-3">
           <h2 className="font-serif text-[clamp(1.4rem,5vw,2.25rem)] leading-none">Guest RSVPs</h2>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Icon-only on phones so the header fits on one line */}
+          <button
+            type="button"
+            onClick={() => setEntourageOpen(true)}
+            aria-label="Entourage"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-[#185844] bg-[#185844] px-2.5 text-[10px] font-semibold uppercase tracking-widest text-white transition-colors hover:border-[#102F27] hover:bg-[#102F27] cursor-pointer sm:px-3.5 sm:text-[11px]"
+          >
+            <Users className="h-4 w-4" aria-hidden />
+            <span className="hidden sm:inline">Entourage</span>
+          </button>
           <button
             type="button"
             onClick={() => {
               setArchiveOpen(true);
               fetchArchived();
             }}
-            className="inline-flex items-center gap-2 rounded-full border border-[#185844]/30 bg-white px-3.5 py-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest text-[#185844] hover:bg-[#185844] hover:text-white transition-colors cursor-pointer"
+            aria-label="Archive"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-full border border-[#185844]/30 bg-white px-2.5 text-[10px] font-semibold uppercase tracking-widest text-[#185844] transition-colors hover:bg-[#185844] hover:text-white cursor-pointer sm:px-3.5 sm:text-[11px]"
           >
             <Archive className="h-4 w-4" aria-hidden />
-            <span>Archive</span>
+            <span className="hidden sm:inline">Archive</span>
           </button>
+          <button
+            type="button"
+            onClick={onSignOut}
+            title="Sign out"
+            aria-label="Sign out"
+            className="grid h-9 w-9 place-items-center rounded-full border border-[#185844]/15 bg-white text-stone-500 hover:border-[#9B2C2C]/40 hover:text-[#9B2C2C] transition-colors cursor-pointer"
+          >
+            <LogOut className="h-4 w-4" aria-hidden />
+          </button>
+          </div>
         </div>
 
         {/* Stats / filters */}
@@ -607,6 +791,11 @@ export default function AdminApp() {
           {rsvps.length > 0 && <Pager pager={pager} />}
         </div>
       </main>
+
+      {/* Entourage: who in the wedding party has answered */}
+      <AnimatePresence>
+        {entourageOpen && <AdminEntourage rsvps={rsvps} onClose={() => setEntourageOpen(false)} />}
+      </AnimatePresence>
 
       {/* Archive: removed RSVPs with Restore */}
       <AnimatePresence>

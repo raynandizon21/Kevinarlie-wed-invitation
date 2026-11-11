@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { ChevronDown, MapPin } from 'lucide-react';
 import { EntourageCategory, TimelineItem } from '../types/wedding';
@@ -503,6 +503,21 @@ export const MobileSite: React.FC<{
     const t = window.setTimeout(() => scrollToSection(section, false), 60);
     return () => window.clearTimeout(t);
   }, [section]);
+
+  // After an RSVP: fade to forest, jump to the hero while hidden, fade back in (no long scroll; music untouched)
+  const FADE_MS = 600;
+  const [veil, setVeil] = useState(false);
+  const veilTimers = useRef<number[]>([]);
+  useEffect(() => () => veilTimers.current.forEach((t) => window.clearTimeout(t)), []);
+  const fadeToTop = () => {
+    setVeil(true);
+    veilTimers.current.push(
+      window.setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+        veilTimers.current.push(window.setTimeout(() => setVeil(false), 150));
+      }, FADE_MS)
+    );
+  };
 
   const date = new Date(weddingDate);
   const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -1076,7 +1091,11 @@ export const MobileSite: React.FC<{
             </p>
             <p className={`mt-3 ${caps} text-[11px] text-white`}>Strictly no plus-ones</p>
           </motion.div>
-          <RsvpForm className="mx-auto mt-8 max-w-md rounded-2xl bg-white p-[clamp(1.1rem,5vw,1.5rem)] text-[#102F27] shadow-2xl" />
+          {/* After sending: 5-second countdown, then fade back to the hero (no reload, so the music keeps playing) */}
+          <RsvpForm
+            onReturn={fadeToTop}
+            className="mx-auto mt-8 max-w-md rounded-2xl bg-white p-[clamp(1.1rem,5vw,1.5rem)] text-[#102F27] shadow-2xl"
+          />
         </div>
       </section>
 
@@ -1099,6 +1118,13 @@ export const MobileSite: React.FC<{
           Back to top
         </button>
       </footer>
+
+      {/* Fade veil for the return-to-top after an RSVP */}
+      <div
+        aria-hidden
+        className={`pointer-events-none fixed inset-0 z-[60] bg-[#102F27] transition-opacity ease-in-out ${veil ? 'opacity-100' : 'opacity-0'}`}
+        style={{ transitionDuration: `${FADE_MS}ms` }}
+      />
     </div>
   );
 };

@@ -3,11 +3,18 @@ import { createServer } from 'http';
 import express from 'express';
 import { Server } from 'socket.io';
 import pool from './db';
+import { adminFromCookie, cleanupAuthTables, login, logout, requireAdmin } from './auth';
 
 const app = express();
 const httpServer = createServer(app);
 // Realtime channel for the admin panel: every saved RSVP is pushed as an `rsvp:new` event
 const io = new Server(httpServer, { path: '/socket.io' });
+// Only a signed-in admin may open the realtime channel (it carries names and contact numbers)
+io.use((socket, next) => {
+  adminFromCookie(socket.handshake.headers.cookie)
+    .then((admin) => next(admin ? undefined : new Error('unauthorized')))
+    .catch(() => next(new Error('unauthorized')));
+});
 io.on('connection', (socket) => {
   console.log(`Admin connected (${socket.id})`);
 });
@@ -15,9 +22,46 @@ io.on('connection', (socket) => {
 const port = parseInt(process.env.RSVP_API_PORT || '3002', 10);
 
 app.use(express.json());
+// nginx runs on the same machine: trust its X-Forwarded-For / X-Forwarded-Proto (client IP, https)
+app.set('trust proxy', 'loopback');
+
+// ---- Admin login (accounts in the `admins` table; add one with `npm run admin:set -- <username>`) ----
+app.post('/api/admin/login', async (req, res) => {
+  try {
+    const { username, password } = req.body ?? {};
+    const result = await login(req, res, username, password);
+    if (!result.ok) return res.status(result.status).json({ error: result.error });
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Admin login failed:', error);
+    res.status(500).json({ error: 'Could not sign in. Please try again.' });
+  }
+});
+
+app.post('/api/admin/logout', async (req, res) => {
+  try {
+    await logout(req, res);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Admin logout failed:', error);
+    res.status(500).json({ error: 'Could not sign out.' });
+  }
+});
+
+app.get('/api/admin/session', async (req, res) => {
+  try {
+    const admin = await adminFromCookie(req.headers.cookie);
+    res.json({ signedIn: Boolean(admin), username: admin?.username ?? null });
+  } catch {
+    res.json({ signedIn: false, username: null });
+  }
+});
+
+cleanupAuthTables();
+setInterval(cleanupAuthTables, 60 * 60 * 1000).unref();
 
 // Endpoint to get all RSVPs
-app.get('/api/rsvps', async (_req, res) => {
+app.get('/api/rsvps', requireAdmin, async (_req, res) => {
   try {
     // Soft-deleted rows (active = 0) stay in the table but are hidden
     const [rows] = await pool.query('SELECT * FROM rsvps WHERE active = 1 ORDER BY timestamp DESC');
@@ -93,7 +137,7 @@ app.post('/api/rsvps', async (req, res) => {
 });
 
 // Admin edit of an active RSVP; pushes the updated row to every open admin
-app.patch('/api/rsvps/:id', async (req, res) => {
+app.patch('/api/rsvps/:id', requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid RSVP id.' });
@@ -131,7 +175,7 @@ app.patch('/api/rsvps/:id', async (req, res) => {
 });
 
 // Soft delete: keep the row, just mark it inactive (active = 0)
-app.delete('/api/rsvps/:id', async (req, res) => {
+app.delete('/api/rsvps/:id', requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid RSVP id.' });
@@ -150,7 +194,7 @@ app.delete('/api/rsvps/:id', async (req, res) => {
 });
 
 // Archive: soft-deleted RSVPs (active = 0), newest first
-app.get('/api/rsvps/archived', async (_req, res) => {
+app.get('/api/rsvps/archived', requireAdmin, async (_req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM rsvps WHERE active = 0 ORDER BY timestamp DESC');
     res.json(rows);
@@ -161,7 +205,7 @@ app.get('/api/rsvps/archived', async (_req, res) => {
 });
 
 // Recover an archived RSVP (active = 1) and push it back to every open admin
-app.patch('/api/rsvps/:id/restore', async (req, res) => {
+app.patch('/api/rsvps/:id/restore', requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid RSVP id.' });
@@ -181,6 +225,8 @@ app.patch('/api/rsvps/:id/restore', async (req, res) => {
   }
 });
 
-httpServer.listen(port, () => {
-  console.log(`RSVP API is running on http://localhost:${port}`);
-});
+// Production sets RSVP_API_HOST=127.0.0.1 so the API is only reachable through nginx (the domain).
+const host = process.env.RSVP_API_HOST;
+const onListen = () => console.log(`RSVP API is running on http://${host || 'localhost'}:${port}`);
+if (host) httpServer.listen(port, host, onListen);
+else httpServer.listen(port, onListen);

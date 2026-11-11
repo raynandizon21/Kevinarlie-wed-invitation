@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { Check } from 'lucide-react';
 import { TimelineItem } from '../types/wedding';
@@ -171,23 +171,56 @@ const Choice: React.FC<{ name: string; checked: boolean; locked: boolean; onChan
   </label>
 );
 
+/** Countdown after an RSVP before the page goes back to the beginning */
+export const RETURN_SECONDS = 5;
+
 export const RsvpForm: React.FC<{
   /** Mobile: called 2s after submit (popup shown). Desktop: omitted, thank-you shows inline. */
   onDone?: () => void;
+  /** Inline thank-you only: called after a RETURN_SECONDS countdown (phone page scrolls back to the top) */
+  onReturn?: () => void;
   className?: string;
-}> = ({ onDone, className = '' }) => {
+}> = ({ onDone, onReturn, className = '' }) => {
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
   const [isAttending, setIsAttending] = useState<GuestChoice>('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  // Seconds left before onReturn; null = no countdown running
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
 
+  // Latest onReturn in a ref: the phone page re-renders every second (wedding countdown), which must not
+  // restart this countdown
+  const onReturnRef = useRef(onReturn);
+  onReturnRef.current = onReturn;
+  const hasInlineReturn = !onDone && Boolean(onReturn);
+
+  // Start once, when the RSVP is sent
   useEffect(() => {
-    if (!submitted || !onDone) return;
-    const t = window.setTimeout(onDone, 2000);
+    if (submitted && hasInlineReturn) setSecondsLeft(RETURN_SECONDS);
+  }, [submitted, hasInlineReturn]);
+  useEffect(() => {
+    if (secondsLeft === null) return;
+    if (secondsLeft <= 0) {
+      setSecondsLeft(null);
+      onReturnRef.current?.();
+      return;
+    }
+    const t = window.setTimeout(() => setSecondsLeft((s) => (s === null ? null : s - 1)), 1000);
     return () => window.clearTimeout(t);
-  }, [submitted, onDone]);
+  }, [secondsLeft]);
+
+  // Same ref trick for onDone (the desktop page also re-renders every second; that used to restart this
+  // 2-second timer forever, so the thank-you page never came)
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+  const hasOnDone = Boolean(onDone);
+  useEffect(() => {
+    if (!submitted || !hasOnDone) return;
+    const t = window.setTimeout(() => onDoneRef.current?.(), 2000);
+    return () => window.clearTimeout(t);
+  }, [submitted, hasOnDone]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -269,6 +302,11 @@ export const RsvpForm: React.FC<{
           <div className="rounded-2xl bg-[#185844]/5 border border-[#185844]/20 px-5 py-5 text-center">
             <p className="text-xs uppercase tracking-[0.3em] text-[#78947F] mb-1">Thank you</p>
             <p className="font-serif text-2xl text-[#102F27]">Response sent</p>
+            {secondsLeft !== null && (
+              <p className="mt-2 text-[11px] text-[#78947F]" aria-live="polite">
+                Returning to the top in <span className="font-semibold tabular-nums text-[#185844]">{secondsLeft}</span>…
+              </p>
+            )}
           </div>
         ) : (
           <button

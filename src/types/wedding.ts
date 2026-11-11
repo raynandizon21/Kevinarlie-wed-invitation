@@ -34,6 +34,8 @@ export interface EntourageCategory {
   category: string;
   /** Show each member's role above the name (roles differ within the group) */
   showRoles?: boolean;
+  /** Members are listed as partners, two by two (1st+2nd, 3rd+4th, …); the admin groups them as pairs */
+  paired?: boolean;
   members: EntourageMember[];
 }
 

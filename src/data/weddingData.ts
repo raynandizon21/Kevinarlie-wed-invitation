@@ -302,6 +302,8 @@ export const ENTOURAGE_DATA: EntourageCategory[] = [
   },
   {
     category: 'Principal Sponsors',
+    // Partners are listed next to each other (Mr. then Mrs. / groomsman then bridesmaid)
+    paired: true,
     members: [
       { role: 'Sponsor', name: 'Hon. Mike Rivera' },
       { role: 'Sponsor', name: 'Mayor Celsa Rivera' },
@@ -353,6 +355,8 @@ export const ENTOURAGE_DATA: EntourageCategory[] = [
   },
   {
     category: 'Groomsmen & Bridesmaids',
+    // Partners are listed next to each other (Mr. then Mrs. / groomsman then bridesmaid)
+    paired: true,
     members: [
       { role: 'Groomsman', name: 'Renz Joseph Chavez' },
       { role: 'Bridesmaid', name: 'Annika Gonzales' },

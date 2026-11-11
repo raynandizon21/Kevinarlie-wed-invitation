@@ -5,7 +5,7 @@ module.exports = {
       name: 'KA-invitation-web',
       cwd: __dirname,
       script: 'node_modules/.bin/vite',
-      args: 'preview --port 2213 --host 0.0.0.0 --strictPort',
+      args: 'preview --port 2213 --host 127.0.0.1 --strictPort',
       env: {
         NODE_ENV: 'production',
         RSVP_API_PORT: '3002',
@@ -17,7 +17,7 @@ module.exports = {
       name: 'KA-invitation-admin',
       cwd: __dirname,
       script: 'node_modules/.bin/vite',
-      args: 'preview --port 2214 --host 0.0.0.0 --strictPort',
+      args: 'preview --port 2214 --host 127.0.0.1 --strictPort',
       env: {
         NODE_ENV: 'production',
         RSVP_API_PORT: '3002',
@@ -34,6 +34,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         RSVP_API_PORT: '3002',
+        RSVP_API_HOST: '127.0.0.1',
       },
       autorestart: true,
       max_memory_restart: '300M',
