@@ -325,6 +325,8 @@ export const ENTOURAGE_DATA: EntourageCategory[] = [
       { role: 'Sponsor', name: 'Mrs. Richel Bautista' },
       { role: 'Sponsor', name: 'Mr. Arnel Gonzales' },
       { role: 'Sponsor', name: 'Mrs. Renie Gonzales' },
+      { role: 'Sponsor', name: 'Mr. Al Gonzales' },
+      { role: 'Sponsor', name: 'Mrs. April Gonzales' },
       { role: 'Sponsor', name: 'Mr. Ian Ocampo' },
       { role: 'Sponsor', name: 'Mrs. Annaliza Ocampo' },
       { role: 'Sponsor', name: 'Mr. Wilfredo Afan' },
