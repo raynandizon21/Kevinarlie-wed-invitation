@@ -381,11 +381,8 @@ const EntourageBlock: React.FC<{ categories: EntourageCategory[] }> = ({ categor
             {secondary.members.map((m) => (
               <div key={m.role}>
                 <p className="font-serif text-[13px] italic text-white/80">{m.role}</p>
-                <div className="mt-1">
-                  {m.name.split(' & ').map((n) => (
-                    <Name key={n}>{n}</Name>
-                  ))}
-                </div>
+                {/* Both names on one line, like the desktop */}
+                <p className="mt-1 whitespace-nowrap font-serif text-[clamp(9px,2.75vw,12px)] uppercase leading-[1.75] tracking-[0.01em] text-white/90">{m.name}</p>
               </div>
             ))}
           </div>
